@@ -119,11 +119,11 @@ async function request(pathOrUrl, params = {}, retries = 4) {
         continue
       }
 
-      // 404 — специальная обработка SoundCloud API, они часто отдают 404 рандомно
-      if (status === 404 && attempt < retries) {
-        console.warn(`[SoundCloud] 404 on ${pathOrUrl}, retrying (${attempt}/${retries})...`)
-        await new Promise(r => setTimeout(r, 300))
-        continue
+      // 404 — обычно означает что трек удален или эксклюзив Go+. 
+      // Нет смысла долбить другие прокси, прерываем сразу, чтобы плеер быстрее скипнул трек.
+      if (status === 404) {
+        console.warn(`[SoundCloud] 404 on ${pathOrUrl}, skipping retries.`)
+        break
       }
 
       // Если ни одно условие не подошло, или кончились попытки — кидаем ошибку
