@@ -5,7 +5,7 @@ const authRoutes = require('./auth.routes')
 const meRoutes = require('./me.routes')
 const userDataRoutes = require('./user-data.routes')
 const themesRoutes = require('./themes.routes')
-const { myCache } = require('../src/middleware/cache')
+const { myCache, redis } = require('../src/middleware/cache')
 const db = require('../services/storage/database')
 const statsStore = require('../services/storage/statsStore')
 const userStore = require('../services/storage/userStore')
@@ -21,6 +21,7 @@ router.get('/api/status', async (req, res) => {
     const appMb = (memUsage.rss / 1024 / 1024).toFixed(2);
     const stats = await myCache.getStats();
     const cacheMb = ((stats.vsize) / 1024 / 1024).toFixed(2);
+    const redisStatus = redis ? redis.status : 'disconnected';
     
     // Fetch stats from DB
     const getCount = (collection) => new Promise(resolve => collection.count({}, (err, c) => resolve(c || 0)))
@@ -39,6 +40,10 @@ router.get('/api/status', async (req, res) => {
                 appMemoryMB: parseFloat(appMb),
                 cacheMemoryMB: parseFloat(cacheMb),
                 cacheItems: stats.keys,
+            },
+            redis: {
+                enabled: !!redis,
+                status: redisStatus
             },
             stats: {
                 totalUsers: usersCount,
