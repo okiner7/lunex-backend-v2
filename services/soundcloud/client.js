@@ -41,77 +41,97 @@ scClient.interceptors.response.use(
 
 let cachedClientId = null
 const FALLBACK_CLIENT_ID = 'iErh0hlIS7lC1NEeRzcimBG8NFFF045C'
+let refreshPromise = null
 
 async function refreshClientId() {
-  try {
-    const { data: html } = await axios.get('https://soundcloud.com', {
-      timeout: 15000,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'text/html',
-        'Accept-Language': 'ru-RU,ru;q=0.9'
-      }
-    })
+  if (refreshPromise) return refreshPromise
 
-    const scriptUrls = html.match(/https:\/\/a-v2\.sndcdn\.com\/assets\/[a-zA-Z0-9-]+\.js/g)
-    if (!scriptUrls) return null
-
-    for (const url of scriptUrls.slice(-15).reverse()) {
-      try {
-        const { data: js } = await axios.get(url, { timeout: 5000 })
-        const match = js.match(/client_id\s*:\s*["']([a-zA-Z0-9]{32})["']/)
-        if (match) {
-          cachedClientId = match[1]
-          console.log('[SoundCloud] Client ID refreshed:', cachedClientId)
-          return cachedClientId
+  refreshPromise = (async () => {
+    try {
+      const { data: html } = await axios.get('https://soundcloud.com', {
+        timeout: 15000,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Accept': 'text/html',
+          'Accept-Language': 'ru-RU,ru;q=0.9'
         }
-      } catch { continue }
-    }
-  } catch (e) {
-    console.error('[SoundCloud] Scrape Error:', e.message)
-  }
+      })
 
-  if (!cachedClientId) {
-    cachedClientId = FALLBACK_CLIENT_ID
-    console.warn('[SoundCloud] Using fallback client_id')
-  }
-  return cachedClientId
+      const scriptUrls = html.match(/https:\/\/a-v2\.sndcdn\.com\/assets\/[a-zA-Z0-9-]+\.js/g)
+      if (!scriptUrls) return null
+
+      for (const url of scriptUrls.slice(-15).reverse()) {
+        try {
+          const { data: js } = await axios.get(url, { timeout: 5000 })
+          const match = js.match(/client_id\s*:\s*["']([a-zA-Z0-9]{32})["']/)
+          if (match) {
+            if (cachedClientId !== match[1]) {
+              cachedClientId = match[1]
+              console.log('[SoundCloud] Client ID refreshed:', cachedClientId)
+            }
+            refreshPromise = null
+            return cachedClientId
+          }
+        } catch { continue }
+      }
+    } catch (e) {
+      console.error('[SoundCloud] Scrape Error:', e.message)
+    }
+
+    if (!cachedClientId) {
+      cachedClientId = FALLBACK_CLIENT_ID
+      console.warn('[SoundCloud] Using fallback client_id')
+    }
+    refreshPromise = null
+    return cachedClientId
+  })()
+
+  return refreshPromise
 }
 
 async function request(pathOrUrl, params = {}, retries = 4) {
   if (!cachedClientId) await refreshClientId()
-  const config = { params: { ...params, client_id: cachedClientId } }
 
-  try {
-    const res = await scClient.get(pathOrUrl, config)
-    return res.data
-  } catch (err) {
-    if (err.response?.status === 403 || err.response?.status === 401 || err.message.includes('captcha')) {
-      cachedClientId = null
-      const newId = await refreshClientId()
-      await new Promise(r => setTimeout(r, 1000))
-      config.params.client_id = newId || FALLBACK_CLIENT_ID
-      const retry = await scClient.get(pathOrUrl, config)
-      return retry.data
-    }
-    if (err.response?.status === 404 && retries > 0) {
-      console.warn(`[SoundCloud] 404 on ${pathOrUrl}, firing ${retries} parallel retries...`)
-      const parallelRequests = Array.from({ length: retries }).map(async (_, index) => {
-        // Slight jitter
-        await new Promise(r => setTimeout(r, index * 150))
-        const retryConfig = { params: { ...params, client_id: cachedClientId } }
-        const retryRes = await scClient.get(pathOrUrl, retryConfig)
-        return retryRes.data
-      })
+  let lastErr = null
+  
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    const config = { params: { ...params, client_id: cachedClientId } }
+    try {
+      const res = await scClient.get(pathOrUrl, config)
+      return res.data
+    } catch (err) {
+      lastErr = err
+      const status = err.response?.status
       
-      try {
-        return await Promise.any(parallelRequests)
-      } catch (aggregateErr) {
-        throw aggregateErr.errors ? aggregateErr.errors[0] : err
+      // 401 Unauthorized — скорее всего протух client_id
+      if (status === 401 && attempt < retries) {
+        cachedClientId = null
+        await refreshClientId()
+        continue
       }
+      
+      // 403, 429 или 0 (timeout) — бан прокси. 
+      // interceptor уже пометил прокси как failed, мы просто пробуем еще раз (до 4 раз).
+      // На следующем круге interceptor подставит НОВЫЙ прокси из пула.
+      if ((status === 403 || status === 429 || !status || err.message.includes('captcha')) && attempt < retries) {
+        // небольшая задержка перед следующим прокси
+        await new Promise(r => setTimeout(r, 500))
+        continue
+      }
+
+      // 404 — специальная обработка SoundCloud API, они часто отдают 404 рандомно
+      if (status === 404 && attempt < retries) {
+        console.warn(`[SoundCloud] 404 on ${pathOrUrl}, retrying (${attempt}/${retries})...`)
+        await new Promise(r => setTimeout(r, 300))
+        continue
+      }
+
+      // Если ни одно условие не подошло, или кончились попытки — кидаем ошибку
+      break
     }
-    throw err
   }
+  
+  throw lastErr
 }
 
 async function fetchAll(initialPath, maxItems = 1000) {
