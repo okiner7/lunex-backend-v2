@@ -69,9 +69,9 @@ async function checkAll() {
       newFails++
 
       // Помечаем в пуле если не в cooldown уже
-      if (!wasInCooldown && result.value?.agent) {
+      if (!wasInCooldown && proxy._url) {
         // Принудительно добавляем страйк через markFailed
-        for (let s = 0; s < 5; s++) markProxyFailed(result.value.agent)
+        for (let s = 0; s < 5; s++) markProxyFailed(proxy._url)
       }
 
       console.warn(`[ProxyHealth] ❌ Proxy #${i} (${proxy.url}) — ${err}`)

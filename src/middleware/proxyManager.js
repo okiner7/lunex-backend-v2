@@ -106,14 +106,28 @@ class ProxyPool {
   }
 
   // Вызвать когда прокси вернул ошибку 403/429/timeout
-  markFailed(agent) {
-    const proxy = this.proxies.find(p => p.agent === agent)
+  markFailed(agentOrUrl) {
+    // Поддерживаем поиск как по агенту, так и по URL
+    const proxy = this.proxies.find(p => p.agent === agentOrUrl || p.url === agentOrUrl || p._url === agentOrUrl)
     if (!proxy) return
     proxy.fails++
     if (proxy.fails >= MAX_FAILS) {
       proxy.cooldownUntil = Date.now() + COOLDOWN_MS
       proxy.fails = 0
       console.warn(`[ProxyPool] Proxy ${proxy.url.replace(/:[^:@]+@/, ':***@')} → cooldown ${COOLDOWN_MS / 1000}s`)
+      
+      // Если все прокси легли — немедленно бьем тревогу в ТГ!
+      if (this.healthy === 0) {
+        try {
+          const telegramBot = require('../services/bot/telegramBot')
+          telegramBot.sendAdminAlert(
+            `🛑 *СРОЧНО: Все прокси легли!*\nПоследний рабочий прокси только что ушел в cooldown.\n` +
+            `Пользователи начнут получать ошибки при попытке включить музыку!`
+          )
+        } catch (err) {
+          console.error('[ProxyPool] Failed to send telegram alert:', err.message)
+        }
+      }
     }
   }
 
