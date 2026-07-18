@@ -14,6 +14,10 @@ async function getPlaylistTracks(playlistIdOrUrl) {
     if (isUrl) {
       const cleanUrl = decodeURIComponent(playlistIdOrUrl).split('?')[0]
       data = await request('/resolve', { url: cleanUrl })
+      if (data && data.id) {
+        // Запрашиваем плейлист по ID, чтобы получить полный массив tracks, а не урезанный от /resolve
+        data = await request(`/playlists/${data.id}`)
+      }
     } else {
       data = await request(`/playlists/${playlistIdOrUrl}`)
     }
