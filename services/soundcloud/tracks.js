@@ -15,11 +15,10 @@ async function getPlaylistTracks(playlistIdOrUrl) {
       const cleanUrl = decodeURIComponent(playlistIdOrUrl).split('?')[0]
       data = await request('/resolve', { url: cleanUrl })
       if (data && data.id) {
-        // Запрашиваем плейлист по ID, чтобы получить полный массив tracks, а не урезанный от /resolve
-        data = await request(`/playlists/${data.id}`)
+        data = await request(`/playlists/${data.id}`, { representation: 'full' })
       }
     } else {
-      data = await request(`/playlists/${playlistIdOrUrl}`)
+      data = await request(`/playlists/${playlistIdOrUrl}`, { representation: 'full' })
     }
     if (!data || !data.id) throw new Error('Playlist not found')
 

@@ -12,12 +12,4 @@ async function getUserPlaylists(profileUrl) {
   return collection.map(formatPlaylist).filter(p => p !== null)
 }
 
-async function getPlaylistTracks(playlistId) {
-  const { request } = require('./client')
-  const { formatTrack } = require('./formatters')
-  const data = await request(`/playlists/${playlistId}`)
-  if (!data || !data.tracks) return []
-  return data.tracks.map(formatTrack).filter(t => t !== null && t.duration > 30000)
-}
-
-module.exports = { getUserPlaylistsById, getUserPlaylists, getPlaylistTracks }
+module.exports = { getUserPlaylistsById, getUserPlaylists }
