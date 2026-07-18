@@ -19,18 +19,8 @@ async function getPlaylistTracks(playlistIdOrUrl) {
     }
     if (!data || !data.id) throw new Error('Playlist not found')
 
-    const allTrackIds = data.tracks ? data.tracks.map(t => t.id) : []
-    if (allTrackIds.length === 0) return []
-
-    let fullTracks = []
-    try {
-      const trackIdsString = allTrackIds.slice(0, 50).join(',')
-      const response = await request('/tracks', { ids: trackIdsString })
-      fullTracks = Array.isArray(response) ? response : (response.collection || [])
-    } catch {
-      fullTracks = data.tracks
-    }
-
+    const fullTracks = data.tracks || []
+    
     return fullTracks.map(formatTrack).filter(t => t !== null && t.title !== 'Untitled Track')
   } catch (error) {
     console.error('SC_PLAYLIST_ERROR:', error.message)
