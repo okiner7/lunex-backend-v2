@@ -19,7 +19,25 @@ async function getPlaylistTracks(playlistIdOrUrl) {
     }
     if (!data || !data.id) throw new Error('Playlist not found')
 
-    const fullTracks = data.tracks || []
+    const allTrackIds = data.tracks ? data.tracks.map(t => t.id) : []
+    if (allTrackIds.length === 0) return []
+
+    let fullTracks = []
+    
+    // Разбиваем на чанки по 50 треков
+    for (let i = 0; i < allTrackIds.length; i += 50) {
+      const chunk = allTrackIds.slice(i, i + 50)
+      try {
+        const response = await request('/tracks', { ids: chunk.join(',') })
+        const fetched = Array.isArray(response) ? response : (response.collection || [])
+        fullTracks = fullTracks.concat(fetched)
+      } catch (err) {
+        console.error('SC_PLAYLIST_CHUNK_ERROR:', err.message)
+        // Если чанк упал, берем оригинальные треки из плейлиста для этого чанка
+        const originalTracks = data.tracks.slice(i, i + 50)
+        fullTracks = fullTracks.concat(originalTracks)
+      }
+    }
     
     return fullTracks.map(formatTrack).filter(t => t !== null && t.title !== 'Untitled Track')
   } catch (error) {
