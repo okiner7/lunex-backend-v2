@@ -27,13 +27,13 @@ class ProxyPool {
 
   async _resolveCountry(proxy) {
     try {
-      const res = await axios.get('http://ip-api.com/json', {
+      const res = await axios.get('https://ipinfo.io/json', {
         httpsAgent: proxy.agent,
         proxy: false,
         timeout: 5000
       })
-      if (res.data && res.data.countryCode) {
-        proxy.country = res.data.countryCode
+      if (res.data && res.data.country) {
+        proxy.country = res.data.country
         console.log(`[ProxyPool] Resolved proxy ${proxy.url.replace(/:[^:@]+@/, ':***@')} to ${proxy.country}`)
       }
     } catch (e) {
