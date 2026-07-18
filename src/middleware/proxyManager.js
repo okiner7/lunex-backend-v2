@@ -1,6 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 const { HttpsProxyAgent } = require('https-proxy-agent')
+const axios = require('axios')
 
 // ─── Proxy Pool Manager ────────────────────────────────────────────────────────
 // Поддерживает несколько форматов в proxies.txt:
@@ -8,6 +9,7 @@ const { HttpsProxyAgent } = require('https-proxy-agent')
 //   http://user:pass@host:port
 //   http://host:port      (без авторизации)
 //   host:port             (без авторизации)
+//   В конец можно дописать |US (страна). Если нет, определится автоматически через ip-api.com
 // Каждая строка = один прокси. Пустые строки и # игнорируются.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -17,15 +19,38 @@ const COOLDOWN_MS = 5 * 60 * 1000  // 5 минут cooldown
 
 class ProxyPool {
   constructor() {
-    this.proxies = []      // { url, agent, fails, cooldownUntil }
+    this.proxies = []      // { url, agent, fails, cooldownUntil, country }
     this.cursor  = 0
     this._load()
     this._watchFile()
   }
 
+  async _resolveCountry(proxy) {
+    try {
+      const res = await axios.get('http://ip-api.com/json', {
+        httpsAgent: proxy.agent,
+        proxy: false,
+        timeout: 5000
+      })
+      if (res.data && res.data.countryCode) {
+        proxy.country = res.data.countryCode
+        console.log(`[ProxyPool] Resolved proxy ${proxy.url.replace(/:[^:@]+@/, ':***@')} to ${proxy.country}`)
+      }
+    } catch (e) {
+      console.warn(`[ProxyPool] Failed to resolve country for ${proxy.url.replace(/:[^:@]+@/, ':***@')}: ${e.message}`)
+    }
+  }
+
   _parse(line) {
     line = line.trim()
     if (!line || line.startsWith('#')) return null
+
+    let country = null
+    if (line.includes('|')) {
+      const parts = line.split('|')
+      line = parts[0]
+      country = parts[1].trim().toUpperCase()
+    }
 
     let url
     // Формат: host:port:user:pass
@@ -43,7 +68,7 @@ class ProxyPool {
     }
 
     try {
-      return { url, agent: new HttpsProxyAgent(url), fails: 0, cooldownUntil: 0 }
+      return { url, agent: new HttpsProxyAgent(url), fails: 0, cooldownUntil: 0, country }
     } catch {
       return null
     }
@@ -64,6 +89,10 @@ class ProxyPool {
       this.proxies = parsed
       this.cursor  = 0
       console.log(`[ProxyPool] Loaded ${parsed.length} proxies`)
+
+      parsed.forEach(p => {
+        if (!p.country) this._resolveCountry(p)
+      })
     } catch (e) {
       console.error('[ProxyPool] Load error:', e.message)
     }
@@ -81,8 +110,12 @@ class ProxyPool {
     } catch {}
   }
 
-  // Round-robin с пропуском cooldown-прокси
   getAgent() {
+    const res = this.getCountryAwareAgent([])
+    return res ? res.agent : null
+  }
+
+  getCountryAwareAgent(forbiddenCountries = []) {
     if (this.proxies.length === 0) return null
 
     const now = Date.now()
@@ -94,15 +127,19 @@ class ProxyPool {
       attempts++
 
       const proxy = this.proxies[idx]
-      if (proxy.cooldownUntil > now) continue  // в cooldown — пропускаем
+      if (proxy.cooldownUntil > now) continue
+      if (proxy.country && forbiddenCountries.includes(proxy.country)) continue
 
-      return proxy.agent
+      return { agent: proxy.agent, country: proxy.country }
     }
 
-    // Все в cooldown — берём наименее проблемный
-    const best = [...this.proxies].sort((a, b) => a.cooldownUntil - b.cooldownUntil)[0]
-    console.warn('[ProxyPool] All proxies in cooldown, using least-bad one')
-    return best?.agent || null
+    const best = [...this.proxies]
+      .filter(p => !p.country || !forbiddenCountries.includes(p.country))
+      .sort((a, b) => a.cooldownUntil - b.cooldownUntil)[0] 
+      || [...this.proxies].sort((a, b) => a.cooldownUntil - b.cooldownUntil)[0]
+
+    console.warn('[ProxyPool] Using fallback proxy in getCountryAwareAgent')
+    return { agent: best?.agent || null, country: best?.country || null }
   }
 
   // Вызвать когда прокси вернул ошибку 403/429/timeout
@@ -146,6 +183,7 @@ class ProxyPool {
       index: i,
       url: p.url.replace(/:[^:@]+@/, ':***@'),
       _url: p.url, // реальный URL для health checker
+      country: p.country,
       fails: p.fails,
       status: p.cooldownUntil > now ? `cooldown ${Math.round((p.cooldownUntil - now) / 1000)}s` : 'active'
     }))
@@ -156,6 +194,10 @@ const pool = new ProxyPool()
 
 function getRandomProxyAgent() {
   return pool.getAgent()
+}
+
+function getCountryAwareProxyAgent(forbiddenCountries = []) {
+  return pool.getCountryAwareAgent(forbiddenCountries)
 }
 
 function markProxyFailed(agent) {
@@ -170,4 +212,4 @@ function getProxyStats() {
   return { total: pool.count, healthy: pool.healthy, proxies: pool.getStats() }
 }
 
-module.exports = { getRandomProxyAgent, markProxyFailed, markProxySuccess, getProxyStats, _pool: pool }
+module.exports = { getRandomProxyAgent, getCountryAwareProxyAgent, markProxyFailed, markProxySuccess, getProxyStats, _pool: pool }

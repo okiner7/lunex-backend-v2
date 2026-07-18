@@ -1,5 +1,5 @@
 const axios = require('axios')
-const { getRandomProxyAgent, markProxyFailed, markProxySuccess } = require('../../src/middleware/proxyManager')
+const { getCountryAwareProxyAgent, markProxyFailed, markProxySuccess } = require('../../src/middleware/proxyManager')
 
 const scClient = axios.create({
   baseURL: 'https://api-v2.soundcloud.com',
@@ -13,10 +13,11 @@ const scClient = axios.create({
 })
 
 scClient.interceptors.request.use(config => {
-  const agent = getRandomProxyAgent()
-  if (agent) {
-    config.httpsAgent = agent
-    config._proxyAgent = agent // сохраняем для markFailed
+  const agentData = getCountryAwareProxyAgent(config._forbiddenCountries || [])
+  if (agentData && agentData.agent) {
+    config.httpsAgent = agentData.agent
+    config._proxyAgent = agentData.agent // сохраняем для markFailed
+    config._proxyCountry = agentData.country // для черного списка при 404
     config.proxy = false
   }
   return config
@@ -89,13 +90,18 @@ async function refreshClientId() {
   return refreshPromise
 }
 
-async function request(pathOrUrl, params = {}, retries = 4) {
+async function request(pathOrUrl, params = {}, retries = 3) {
   if (!cachedClientId) await refreshClientId()
 
   let lastErr = null
+  let forbiddenCountries = []
   
   for (let attempt = 1; attempt <= retries; attempt++) {
-    const config = { params: { ...params, client_id: cachedClientId } }
+    const config = { 
+      params: { ...params, client_id: cachedClientId },
+      _forbiddenCountries: forbiddenCountries
+    }
+    
     try {
       const res = await scClient.get(pathOrUrl, config)
       return res.data
@@ -111,22 +117,24 @@ async function request(pathOrUrl, params = {}, retries = 4) {
       }
       
       // 403, 429 или 0 (timeout) — бан прокси. 
-      // interceptor уже пометил прокси как failed, мы просто пробуем еще раз (до 4 раз).
-      // На следующем круге interceptor подставит НОВЫЙ прокси из пула.
       if ((status === 403 || status === 429 || !status || err.message.includes('captcha')) && attempt < retries) {
-        // небольшая задержка перед следующим прокси
         await new Promise(r => setTimeout(r, 500))
         continue
       }
 
-      // 404 — обычно означает что трек удален или эксклюзив Go+. 
-      // Нет смысла долбить другие прокси, прерываем сразу, чтобы плеер быстрее скипнул трек.
-      if (status === 404) {
-        console.warn(`[SoundCloud] 404 on ${pathOrUrl}, skipping retries.`)
-        break
+      // 404 — геоблок или удаленный трек
+      if (status === 404 && attempt < retries) {
+        const failedCountry = err.config?._proxyCountry
+        if (failedCountry) {
+          forbiddenCountries.push(failedCountry)
+          console.warn(`[SoundCloud] 404 on ${pathOrUrl}, blocking country ${failedCountry} for next retry.`)
+        } else {
+          console.warn(`[SoundCloud] 404 on ${pathOrUrl}, retrying (${attempt}/${retries})...`)
+        }
+        await new Promise(r => setTimeout(r, 300))
+        continue
       }
 
-      // Если ни одно условие не подошло, или кончились попытки — кидаем ошибку
       break
     }
   }

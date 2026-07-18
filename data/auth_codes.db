@@ -3,3 +3,5 @@
 {"$$indexCreated":{"fieldName":"telegramId","unique":false,"sparse":false}}
 {"$$indexCreated":{"fieldName":"code","unique":true}}
 {"$$indexCreated":{"fieldName":"telegramId"}}
+{"$$deleted":true,"_id":"pOYxve05MQ2IdvEW"}
+{"code":"52G4LW","telegramId":"6102867658","name":"x80070005 ㅤ","avatar":"https://api.telegram.org/file/bot8972676757:AAFYIXzqyh-3G16_f0UktXZAqFD7Ilo1jx0/photos/file_5.jpg","createdAt":{"$$date":1784390589530},"expiresAt":{"$$date":1784390889530},"_id":"e25Bki0sW7OXeK5n"}
