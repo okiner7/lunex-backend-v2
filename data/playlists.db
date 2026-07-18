@@ -1,0 +1,3 @@
+{"ownerId":"google_100687047220188706172","name":"123","tracks":[{"id":"vIOO_7DLr3M","source":"youtube","title":"BURN IT DOWN","artists":[{"name":"LINKIN PARK","id":"UCxgN32UVVztKAQd2HkXzBtw"}],"duration":231000,"artwork":"https://yt3.googleusercontent.com/ldVVO7vktLrUuW13A3oCdDlgrxfTQxmIyyMwAxef5W07pkRxdbgu3GLV8BaIZkW_RDR7qxd9utQy7Wqj=w120-h120-l90-rj","isExplicit":false,"url":"https://music.youtube.com/watch?v=vIOO_7DLr3M","artist":"LINKIN PARK","artistId":"UCxgN32UVVztKAQd2HkXzBtw"}],"createdAt":{"$$date":1784300140542},"updatedAt":{"$$date":1784318698635},"_id":"Y19VlVzNPMg17mAG"}
+{"$$indexCreated":{"fieldName":"ownerId","unique":false,"sparse":false}}
+{"$$indexCreated":{"fieldName":"ownerId"}}
