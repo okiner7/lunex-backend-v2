@@ -19,8 +19,8 @@ router.get('/', (req, res) => res.json({ status: 'ok', service: 'Lunex API' }))
 router.get('/api/status', async (req, res) => {
     const memUsage = process.memoryUsage();
     const appMb = (memUsage.rss / 1024 / 1024).toFixed(2);
-    const stats = myCache.getStats();
-    const cacheMb = ((stats.vsize + stats.ksize) / 1024 / 1024).toFixed(2);
+    const stats = await myCache.getStats();
+    const cacheMb = ((stats.vsize) / 1024 / 1024).toFixed(2);
     
     // Fetch stats from DB
     const getCount = (collection) => new Promise(resolve => collection.count({}, (err, c) => resolve(c || 0)))

@@ -3,3 +3,6 @@ node_modules/
 yt-dlp/
 bin/
 *.exe
+logs/
+proxies.txt
+*.db
