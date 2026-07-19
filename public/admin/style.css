@@ -250,17 +250,14 @@ textarea.input-base {
 
 /* User Profile Modal */
 .profile-cover {
-  height: 80px;
-  background: linear-gradient(135deg, rgba(230,126,34,0.15), rgba(108,92,231,0.15));
-  position: relative;
+  display: none;
 }
 .profile-header {
-  padding: 0 24px;
+  padding: 24px 24px 0 24px;
   position: relative;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 20px;
-  margin-top: -40px;
 }
 .profile-avatar {
   width: 80px;
