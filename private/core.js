@@ -1,16 +1,7 @@
-let jwtToken = localStorage.getItem('lunex_admin_jwt') || ''
 let chartInstance = null
 let logsInterval = null
 
-document.addEventListener('DOMContentLoaded', () => {
-  const jwtInput = document.getElementById('jwtToken')
-  if (jwtInput) {
-    jwtInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') login()
-    })
-  }
-
-  document.getElementById('btn-login')?.addEventListener('click', login)
+function initDashboard() {
   document.getElementById('btn-logout')?.addEventListener('click', logout)
   document.getElementById('btn-refresh-stats')?.addEventListener('click', fetchStats)
   document.getElementById('btn-refresh-users')?.addEventListener('click', fetchRecentUsers)
@@ -36,11 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
     })
   })
 
-  if (jwtToken) {
-    document.getElementById('jwtToken').value = jwtToken
-    login()
-  }
-})
+  switchTab('overview')
+}
 
 async function apiRequest(endpoint, method = 'GET', body = null) {
   if (!jwtToken) throw new Error('Not authenticated')
@@ -68,35 +56,7 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
   return data.data !== undefined ? data.data : data
 }
 
-async function login() {
-  const tokenInputRaw = document.getElementById('jwtToken').value;
-  const tokenMatch = tokenInputRaw.match(/[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+/);
-  const tokenInput = tokenMatch ? tokenMatch[0] : tokenInputRaw.trim();
 
-  if (!tokenInput) {
-    alert('Please enter a valid JWT token')
-    return
-  }
-  
-  if (/[^\x20-\x7E]/.test(tokenInput)) {
-    alert('Invalid characters in token.')
-    return
-  }
-
-  jwtToken = tokenInput
-  
-  try {
-    await apiRequest('/api/status')
-    localStorage.setItem('lunex_admin_jwt', jwtToken)
-    document.getElementById('auth-view').classList.remove('active')
-    document.getElementById('dashboard-view').classList.add('active')
-    switchTab('overview')
-  } catch (err) {
-    alert('Authentication failed: ' + err.message)
-    localStorage.removeItem('lunex_admin_jwt')
-    jwtToken = ''
-  }
-}
 
 function logout() {
   localStorage.removeItem('lunex_admin_jwt')

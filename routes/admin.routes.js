@@ -54,6 +54,10 @@ setInterval(async () => {
 // All routes here are protected by adminAuth
 router.use(adminAuth)
 
+router.get('/core.js', (req, res) => {
+  res.sendFile(path.join(__dirname, '../private/core.js'))
+})
+
 router.get('/proxies', asyncHandler(async (req) => {
   return proxyManager.getProxyStats().proxies
 }))
