@@ -6,3 +6,4 @@ bin/
 logs/
 proxies.txt
 *.db
+.agents/
