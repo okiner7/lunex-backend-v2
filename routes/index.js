@@ -53,7 +53,11 @@ router.get('/api/status', async (req, res) => {
                 totalListens: globalStats.totalListens,
                 totalSearches: globalStats.totalSearches
             },
-            proxy: getProxyStats(),
+            // LNX-2026-004 fix: не раскрываем IP/URL прокси публично — только счётчики
+            proxy: {
+              total: getProxyStats().total,
+              healthy: getProxyStats().healthy
+            },
             proxyHealthy: proxyHealth.isHealthy(),
             uptimeSeconds: process.uptime()
         }
@@ -62,7 +66,8 @@ router.get('/api/status', async (req, res) => {
 
 router.get('/api/stats/top-tracks', async (req, res) => {
     try {
-        const limit = parseInt(req.query.limit) || 10
+        // LNX-2026-010 fix: лимит не более 50 записей
+        const limit = Math.min(parseInt(req.query.limit) || 10, 50)
         const tracks = await statsStore.getTopTracks(limit)
         res.json({ success: true, data: tracks })
     } catch (err) {

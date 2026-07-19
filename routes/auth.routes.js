@@ -79,7 +79,16 @@ router.post('/telegram', asyncHandler(async (req) => {
   return { token, user: { ...profile, badges: await userStore.getBadges(profile.telegramId) } }
 }))
 
-router.post('/verify-code', asyncHandler(async (req) => {
+// LNX-2026-005 fix: строгий rate limit на эндпоинт ввода кода (5 попыток за 5 минут) — защита от брутфорса
+const rateLimit = require('express-rate-limit')
+const verifyCodeLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  message: { success: false, error: 'Превышен лимит попыток. Подождите 5 минут.' }
+})
+
+router.post('/verify-code', verifyCodeLimiter, asyncHandler(async (req) => {
   const { code } = req.body
   if (!code) throw new Error('Code required')
 

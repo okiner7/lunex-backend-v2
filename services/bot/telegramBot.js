@@ -52,7 +52,9 @@ function start() {
       if (photos.total_count > 0) {
         const fileId = photos.photos[0][0].file_id
         const file = await ctx.telegram.getFile(fileId)
-        avatar = `https://api.telegram.org/file/bot${TELEGRAM_BOT_TOKEN}/${file.file_path}`
+        // LNX-2026-007 fix: сохраняем только file_path, без токена бота в URL
+        // URL с токеном генерируется динамически на бэкенде в /me роуте
+        avatar = file.file_path || null
       }
     } catch (err) {
       console.warn('[TG Bot] Could not fetch avatar:', err.message)

@@ -5,6 +5,10 @@ function validateAuthData(data) {
   const { hash, ...fields } = data
   if (!hash) return null
 
+  // LNX-2026-011 fix: проверяем auth_date — данные старше 24 часов выбрасываются
+  const authDate = parseInt(fields.auth_date, 10)
+  if (!authDate || (Date.now() / 1000 - authDate) > 86400) return null
+
   const checkString = Object.keys(fields)
     .sort()
     .map(key => `${key}=${fields[key]}`)

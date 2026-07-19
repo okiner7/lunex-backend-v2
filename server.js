@@ -65,9 +65,20 @@ const limiter = rateLimit({
 })
 app.use(limiter)
 
-// CORS setup with maxAge to prevent OPTIONS spam
+// CORS — разрешаем только конкретные origins (LNX-2026-008 fix)
+const ALLOWED_ORIGINS = [
+  /^http:\/\/localhost(:\d+)?$/,   // localhost любой порт (dev)
+  /^https:\/\/localhost(:\d+)?$/, // тоже через HTTPS
+  /^lunex:\/\//,                   // Electron deep-link
+]
 app.use(cors({
-  maxAge: 86400 // Cache preflight requests for 24 hours
+  origin: (origin, callback) => {
+    // Атомарные запросы (Electron, curl, mobile) — пропускаем
+    if (!origin) return callback(null, true)
+    if (ALLOWED_ORIGINS.some(r => r.test(origin))) return callback(null, true)
+    callback(new Error(`CORS: origin '${origin}' not allowed`))
+  },
+  maxAge: 86400
 }))
 app.use(express.json())
 
