@@ -26,8 +26,14 @@ router.post('/', authRequired, asyncHandler(async (req) => {
   return await themeStore.create(authorId, authorName, name, themeData)
 }))
 
-// Public endpoint to increment downloads
-router.post('/:id/download', asyncHandler(async (req) => {
+// LNX-2026-026: rate-limit theme download counter — max 10 increments per IP per minute
+const rateLimit = require('express-rate-limit')
+const downloadLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: { success: false, error: 'Too many requests' }
+})
+router.post('/:id/download', downloadLimiter, asyncHandler(async (req) => {
   const id = String(req.params.id)
   await themeStore.incrementDownloads(id)
   return { success: true }

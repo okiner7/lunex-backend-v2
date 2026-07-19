@@ -39,6 +39,10 @@
 | [LNX-2026-021](#lnx-2026-021) | 🟡 MEDIUM (5.8) | `contentSecurityPolicy: false` disables CSP entirely | ✅ Fixed | `security/fix-018-023` |
 | [LNX-2026-022](#lnx-2026-022) | 🟡 MEDIUM (5.5) | `artwork` URL in track data not validated — SSRF vector | ✅ Fixed | `security/fix-018-023` |
 | [LNX-2026-023](#lnx-2026-023) | 🟢 LOW (3.1) | Discord RPC `track.title` sent without length limit | ✅ Fixed | `security/fix-018-023` |
+| [LNX-2026-024](#lnx-2026-024) | 🟠 HIGH (7.4) | Auth code generated with `Math.random()` (not cryptographically secure) | ✅ Fixed | `security/fix-024-027` |
+| [LNX-2026-025](#lnx-2026-025) | 🟡 MEDIUM (5.3) | `settingsStore.upsert` merges full user payload without field whitelist | ✅ Fixed | `security/fix-024-027` |
+| [LNX-2026-026](#lnx-2026-026) | 🟢 LOW (3.5) | `POST /themes/:id/download` has no rate limit — counter can be inflated | ✅ Fixed | `security/fix-024-027` |
+| [LNX-2026-027](#lnx-2026-027) | 🟡 MEDIUM (5.0) | `/api/yt/upnext` history parameter unbounded — DoS via huge list | ✅ Fixed | `security/fix-024-027` |
 
 **Legend:** ✅ Fixed · ⚠️ Partial · ⏳ Backlog
 
@@ -381,6 +385,51 @@ In `electron/discord.js`, `track.title` and `track.artist` are passed directly t
 details: (track.title || 'Unknown').slice(0, 128),
 state: stateText.slice(0, 128),
 ```
+
+---
+
+### LNX-2026-024
+**Auth Code Generated with `Math.random()` (Cryptographically Weak)**  
+**CVSS: 7.4 (High)** · `AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:N`
+
+`authCodeStore.js` used `Math.floor(Math.random() * chars.length)` to generate the 6-character login code. `Math.random()` is a pseudo-random number generator (PRNG) seeded by the V8 engine — it is not cryptographically random and is predictable if the seed can be inferred. An attacker who can observe or manipulate memory state could predict future codes.
+
+**Fix:** Replaced with `crypto.randomInt(0, chars.length)` from Node's built-in `crypto` module.
+
+```diff
+- code += chars[Math.floor(Math.random() * chars.length)]
++ code += chars[crypto.randomInt(0, chars.length)]
+```
+
+---
+
+### LNX-2026-025
+**`settingsStore.upsert` — No Field Whitelist**  
+**CVSS: 5.3 (Medium)** · `AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:L/A:N`
+
+`settingsStore.upsert()` merged the entire `fields` object from user input directly into the DB document with `{ ...existing, ...fields, userId }`. This allowed a user to inject arbitrary keys into the settings document, including overwriting `userId`, `_id`, or adding noise fields that pollute the database.
+
+**Fix:** Only `theme`, `accent`, and `customThemeData` are now allowed through an explicit whitelist.
+
+---
+
+### LNX-2026-026
+**`POST /themes/:id/download` — No Rate Limit**  
+**CVSS: 3.5 (Low)** · `AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:N`
+
+The theme download counter endpoint was publicly accessible with no rate limiting. Any user could send thousands of requests to artificially inflate the download count of any theme.
+
+**Fix:** Added a dedicated rate limiter of **10 requests per minute per IP**.
+
+---
+
+### LNX-2026-027
+**`/api/yt/upnext` History Parameter Unbounded**  
+**CVSS: 5.0 (Medium)** · `AV:N/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:L`
+
+The `?history=` query parameter in the `/api/yt/upnext` route was split on commas without any length limit. A request with tens of thousands of comma-separated IDs would create an enormous array processed by the recommendation logic, causing CPU/memory spikes (application-layer DoS).
+
+**Fix:** History array is now capped at **50 IDs** with `.slice(0, 50)`.
 
 ---
 

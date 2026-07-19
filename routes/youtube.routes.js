@@ -69,7 +69,8 @@ router.get('/album-tracks', cache(21600), asyncHandler(async (req) => {
 router.get('/upnext', asyncHandler(async (req) => {
   const { id, history } = req.query
   if (!id) throw new Error('Video ID required')
-  const historyIds = history ? history.split(',').filter(Boolean) : []
+  // LNX-2026-027: cap history list to 50 IDs to prevent DoS via huge payload
+  const historyIds = history ? history.split(',').filter(Boolean).slice(0, 50) : []
   return await yt.getUpNexts(id, historyIds)
 }))
 
