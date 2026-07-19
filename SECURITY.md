@@ -9,24 +9,6 @@
 
 ---
 
-## Reporting a Vulnerability
-
-If you discover a security vulnerability in Lunex, **do not open a public issue**.
-
-Contact privately:
-- **Telegram:** [@okiner7](https://t.me/okiner7)
-- **Email:** *(if available)*
-
-Please include:
-1. CVE/vulnerability type
-2. Affected file and line numbers
-3. Steps to reproduce
-4. Potential impact
-
-We aim to respond within **48 hours** and release a patch within **7 days** for critical issues.
-
----
-
 ## Vulnerability Disclosure History
 
 > Last audit: **2026-07-19**  
