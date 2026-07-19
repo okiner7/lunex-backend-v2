@@ -342,26 +342,60 @@ async function openUserModal(id) {
     const res = await apiRequest(`/users/${id}/details`)
     const data = res.data || res
     
-    document.getElementById('user-modal-title').innerText = `User Details: ${data.user?.name || id}`
+    const user = data.user || { id, name: id }
+    document.getElementById('up-name').innerText = user.name || id
+    document.getElementById('up-avatar').innerText = (user.name || id).substring(0, 1).toUpperCase()
     
+    // Setup badges
+    let badgesHtml = `<span class="badge gray">${user.id}</span>`
+    if (user.platform) badgesHtml += `<span class="badge" style="background: rgba(255,255,255,0.1)">${user.platform}</span>`
+    if (user.banned) badgesHtml += `<span class="badge danger">BANNED</span>`
+    else badgesHtml += `<span class="badge success">ACTIVE</span>`
+    document.getElementById('up-badges').innerHTML = badgesHtml
+
+    // Setup actions
+    if (user.banned) {
+      document.getElementById('up-actions').innerHTML = `<button class="btn-glass" onclick="unbanUser('${user.id}'); closeUserModal()">Unban User</button>`
+    } else {
+      document.getElementById('up-actions').innerHTML = `<button class="btn-danger" onclick="banUser('${user.id}'); closeUserModal()">Ban User</button>`
+    }
+
+    // Stats
+    const totalSearches = (data.searchHistory && data.searchHistory.length) || 0
+    const totalListens = (data.listeningHistory && data.listeningHistory.length) || 0
+    document.getElementById('up-stat-searches').innerText = totalSearches
+    document.getElementById('up-stat-listens').innerText = totalListens
+    document.getElementById('up-stat-playlists').innerText = (data.playlists && data.playlists.length) || 0
+    document.getElementById('up-stat-active').innerText = user.lastActiveAt ? new Date(user.lastActiveAt).toLocaleString() : '-'
+
     const searchTbody = document.getElementById('user-modal-searches')
     searchTbody.innerHTML = ''
     if (data.searchHistory && data.searchHistory.length) {
-      data.searchHistory.forEach(s => {
-        searchTbody.innerHTML += `<tr><td style="font-size: 13px">${s.query}</td><td style="font-size: 11px; color: var(--text-muted)">${new Date(s.createdAt).toLocaleDateString()}</td></tr>`
+      data.searchHistory.slice(0, 20).forEach(s => {
+        searchTbody.innerHTML += `
+          <div class="feed-item">
+            <div class="feed-title">${s.query}</div>
+            <div class="feed-date">${new Date(s.createdAt).toLocaleDateString()}</div>
+          </div>
+        `
       })
     } else {
-      searchTbody.innerHTML = '<tr><td colspan="2" style="text-align: center; color: var(--text-muted)">No recent searches</td></tr>'
+      searchTbody.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding: 12px; font-size: 13px;">No recent searches</div>'
     }
     
     const listenTbody = document.getElementById('user-modal-listens')
     listenTbody.innerHTML = ''
     if (data.listeningHistory && data.listeningHistory.length) {
-      data.listeningHistory.forEach(s => {
-        listenTbody.innerHTML += `<tr><td style="font-size: 13px">${s.title}</td><td style="font-size: 11px; color: var(--text-muted)">${new Date(s.playedAt).toLocaleDateString()}</td></tr>`
+      data.listeningHistory.slice(0, 20).forEach(s => {
+        listenTbody.innerHTML += `
+          <div class="feed-item">
+            <div class="feed-title">${s.title}</div>
+            <div class="feed-date">${new Date(s.playedAt).toLocaleDateString()}</div>
+          </div>
+        `
       })
     } else {
-      listenTbody.innerHTML = '<tr><td colspan="2" style="text-align: center; color: var(--text-muted)">No recent listens</td></tr>'
+      listenTbody.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding: 12px; font-size: 13px;">No recent listens</div>'
     }
 
     document.getElementById('user-modal').classList.add('active')

@@ -213,33 +213,60 @@
 
   <!-- User Detail Modal -->
   <div id="user-modal" class="modal-overlay">
-    <div class="modal" style="max-width: 600px;">
-      <div class="modal-header" id="user-modal-title">User Details</div>
-      <div style="display: flex; gap: 16px; margin-bottom: 16px;">
-        <div style="flex: 1;">
-          <div class="text-muted" style="margin-bottom: 8px;">Recent Searches</div>
-          <div class="card" style="padding: 0; max-height: 200px; overflow-y: auto;">
-            <table class="data-table">
-              <tbody id="user-modal-searches"></tbody>
-            </table>
+    <div class="modal" style="max-width: 700px; padding: 0; overflow: hidden;">
+      <div class="profile-cover"></div>
+      <div class="profile-header">
+        <div class="profile-avatar" id="up-avatar">?</div>
+        <div class="profile-info">
+          <h2 id="up-name">User Name</h2>
+          <div class="profile-badges" id="up-badges">
+            <span class="badge">User ID</span>
           </div>
         </div>
-        <div style="flex: 1;">
-          <div class="text-muted" style="margin-bottom: 8px;">Recent Listens</div>
-          <div class="card" style="padding: 0; max-height: 200px; overflow-y: auto;">
-            <table class="data-table">
-              <tbody id="user-modal-listens"></tbody>
-            </table>
+        <div class="profile-actions" id="up-actions">
+          <button class="btn-danger">Ban</button>
+        </div>
+      </div>
+      
+      <div class="profile-body">
+        <div class="profile-stats">
+          <div class="stat-box">
+            <div class="stat-label">Total Searches</div>
+            <div class="stat-value" id="up-stat-searches">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Total Listens</div>
+            <div class="stat-value" id="up-stat-listens">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Playlists</div>
+            <div class="stat-value" id="up-stat-playlists">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Last Active</div>
+            <div class="stat-value" style="font-size: 13px; line-height: 24px;" id="up-stat-active">-</div>
+          </div>
+        </div>
+
+        <div class="profile-feed-container">
+          <div class="feed-col">
+            <div class="feed-header">Recent Searches</div>
+            <div class="feed-list" id="user-modal-searches"></div>
+          </div>
+          <div class="feed-col">
+            <div class="feed-header">Recent Listens</div>
+            <div class="feed-list" id="user-modal-listens"></div>
           </div>
         </div>
       </div>
-      <div class="modal-actions">
-        <button id="btn-close-user-modal" class="btn-secondary">Close</button>
+      
+      <div class="modal-footer" style="padding: 16px 24px; border-top: 1px solid var(--border); background: var(--surface); display: flex; justify-content: flex-end;">
+        <button class="btn-secondary" onclick="closeUserModal()">Close</button>
       </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="app.js?v=10004"></script>
+  <script src="app.js?v=10005"></script>
 </body>
 </html>
