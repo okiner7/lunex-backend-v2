@@ -352,7 +352,8 @@ async function openUserModal(id) {
     }
     
     // Setup badges
-    let badgesHtml = `<span class="badge gray">${user.id || user.providerId || id}</span>`
+    const targetId = user.id || user.providerId || id
+    let badgesHtml = `<span class="badge" style="background: rgba(255,255,255,0.05); color: #999; border: 1px solid rgba(255,255,255,0.05); font-weight: 500; border-radius: 6px; padding: 6px 10px; font-size: 13px; font-family: monospace;">${targetId}</span>`
     if (user.platform) badgesHtml += `<span class="badge" style="background: rgba(255,255,255,0.1)">${user.platform}</span>`
     if (user.badges && Array.isArray(user.badges)) {
       const developerSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6C5CE7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`
