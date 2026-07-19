@@ -1,18 +1,29 @@
 require('dotenv').config()
 const jwt = require('jsonwebtoken')
 
-const ids = (process.env.DEV_TELEGRAM_IDS || '').split(',').filter(Boolean)
+const args = process.argv.slice(2)
+const emailArg = args.find(a => a.includes('@'))
+const idArg = args.find(a => /^\d+$/.test(a))
 
-if (ids.length === 0) {
-  console.error('\n[Ошибка] В .env нет DEV_TELEGRAM_IDS!')
-  console.error('Сначала добавь свой ID: DEV_TELEGRAM_IDS=123456\n')
+const tgIds = idArg ? [idArg] : (process.env.DEV_TELEGRAM_IDS || '').split(',').filter(Boolean)
+const googleEmails = emailArg ? [emailArg] : (process.env.DEV_EMAILS || '').split(',').filter(Boolean)
+
+if (tgIds.length === 0 && googleEmails.length === 0) {
+  console.error('\n[Ошибка] В .env нет ни DEV_TELEGRAM_IDS, ни DEV_EMAILS, и аргументы не переданы!')
+  console.error('Пример использования: node scripts/generate-admin-token.js test@gmail.com\n')
   process.exit(1)
 }
 
-const adminId = ids[0]
+let payload = {}
+
+if (emailArg || (googleEmails.length > 0 && tgIds.length === 0)) {
+  payload = { provider: 'google', email: googleEmails[0] }
+} else {
+  payload = { provider: 'telegram', provider_id: tgIds[0] }
+}
 
 const token = jwt.sign(
-  { provider: 'telegram', provider_id: adminId }, 
+  payload, 
   process.env.JWT_SECRET,
   { expiresIn: '7d' } // Живёт 7 дней
 )
