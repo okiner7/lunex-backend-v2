@@ -435,7 +435,6 @@ async function deleteUser(id) {
   try {
     await apiRequest(`/users/${id}`, 'DELETE')
     fetchRecentUsers()
-    if (currentQuery) searchUsers()
     closeUserModal()
   } catch (err) {
     console.error('Failed to delete user', err)
