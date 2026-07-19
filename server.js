@@ -74,8 +74,8 @@ app.use(limiter)
 
 // CORS — разрешаем только конкретные origins (LNX-2026-008 fix)
 const ALLOWED_ORIGINS = [
-  /^http:\/\/localhost(:\d+)?$/,   // localhost любой порт (dev)
-  /^https:\/\/localhost(:\d+)?$/, // тоже через HTTPS
+  /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.\d+\.\d+\.\d+)(:\d+)?$/,
+  /^https:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.\d+\.\d+\.\d+)(:\d+)?$/,
   /^lunex:\/\//,                   // Electron deep-link
 ]
 app.use(cors({
