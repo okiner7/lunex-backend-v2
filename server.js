@@ -18,6 +18,9 @@ app.use(helmet())
 // Compression (Gzip)
 app.use(compression())
 
+// Static Files
+app.use(express.static('public'))
+
 // HTTP Logging (skip OPTIONS to prevent console spam)
 app.use(morgan('dev', {
   skip: (req, res) => req.method === 'OPTIONS'
@@ -28,8 +31,8 @@ const { APP_SECRET } = require('./src/config/env')
 const crypto = require('crypto')
 
 app.use((req, res, next) => {
-  // Allow Telegram Webhooks, Status, Root endpoint, and OAuth routes
-  if (req.path === '/api/status' || req.path === '/' || req.path.startsWith('/auth/') || req.method === 'OPTIONS') return next()
+  // Allow Telegram Webhooks, Status, Root endpoint, OAuth routes, and static Admin UI
+  if (req.path === '/api/status' || req.path === '/' || req.path.startsWith('/auth/') || req.path.startsWith('/admin') || req.method === 'OPTIONS') return next()
   
   const timestamp = req.headers['x-lunex-timestamp']
   const signature = req.headers['x-lunex-signature']

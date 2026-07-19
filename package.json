@@ -9,7 +9,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
-    "test": "cross-env NODE_ENV=test APP_SECRET=testsecret JWT_SECRET=testjwt BOT_TOKEN=testbot node --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit"
+    "test": "cross-env NODE_ENV=test APP_SECRET=testsecret JWT_SECRET=testjwt BOT_TOKEN=testbot DEV_TELEGRAM_IDS=999999 node --experimental-vm-modules node_modules/jest/bin/jest.js --forceExit"
   },
   "dependencies": {
     "@seald-io/nedb": "^4.1.2",

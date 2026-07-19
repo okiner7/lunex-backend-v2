@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lunex Admin Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+  <!-- AUTH SCREEN -->
+  <div id="auth-screen" class="screen active">
+    <div class="auth-card glass">
+      <div class="logo">
+        <i class="fa-solid fa-moon"></i>
+        <span>Lunex Admin</span>
+      </div>
+      <p class="subtitle">Secure Backend Control</p>
+      
+      <div class="input-group">
+        <label>JWT Token (Developer)</label>
+        <input type="password" id="auth-token" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+      </div>
+
+      <div class="input-group">
+        <label>APP SECRET (HMAC Signature)</label>
+        <input type="password" id="auth-secret" placeholder="Your backend APP_SECRET">
+        <small>Used locally for WebCrypto HMAC SHA-256 signing. Never sent to server.</small>
+      </div>
+
+      <button id="btn-login" class="btn primary-btn">
+        <i class="fa-solid fa-lock-open"></i> Unlock Dashboard
+      </button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD SCREEN -->
+  <div id="dashboard-screen" class="screen">
+    <nav class="glass-nav">
+      <div class="logo">
+        <i class="fa-solid fa-moon"></i>
+        <span>Lunex Admin</span>
+      </div>
+      <button id="btn-logout" class="btn icon-btn"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+    </nav>
+
+    <main class="dashboard-grid">
+      <!-- STATS WIDGETS -->
+      <section class="widgets">
+        <div class="widget glass">
+          <i class="fa-solid fa-users widget-icon"></i>
+          <div class="widget-info">
+            <h3>Total Users</h3>
+            <p id="stat-users">...</p>
+          </div>
+        </div>
+        <div class="widget glass">
+          <i class="fa-solid fa-bolt widget-icon"></i>
+          <div class="widget-info">
+            <h3>Active Today</h3>
+            <p id="stat-active">...</p>
+          </div>
+        </div>
+        <div class="widget glass">
+          <i class="fa-solid fa-memory widget-icon"></i>
+          <div class="widget-info">
+            <h3>RAM Usage</h3>
+            <p id="stat-ram">...</p>
+          </div>
+        </div>
+        <div class="widget glass">
+          <i class="fa-solid fa-clock widget-icon"></i>
+          <div class="widget-info">
+            <h3>Uptime</h3>
+            <p id="stat-uptime">...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROXY MANAGER -->
+      <section class="proxy-manager glass">
+        <div class="section-header">
+          <h2><i class="fa-solid fa-network-wired"></i> Proxy Pool Manager</h2>
+          <div class="header-actions">
+            <span class="badge success" id="proxy-health-badge">Healthy</span>
+            <button id="btn-refresh-proxies" class="btn icon-btn"><i class="fa-solid fa-rotate-right"></i></button>
+            <button id="btn-reset-proxies" class="btn warning-btn"><i class="fa-solid fa-heart-pulse"></i> Revive Failed</button>
+          </div>
+        </div>
+        <div class="table-container">
+          <table class="proxy-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>URL</th>
+                <th>Country</th>
+                <th>Fails</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="proxy-list">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- TOAST NOTIFICATIONS -->
+  <div id="toast-container"></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
