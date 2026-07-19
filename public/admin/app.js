@@ -433,11 +433,7 @@ async function openUserModal(id) {
 async function deleteUser(id) {
   if (!confirm('Are you sure you want to completely delete this user? This cannot be undone.')) return
   try {
-    const res = await fetch(`/api/admin/users/${id}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
-    })
-    if (!res.ok) throw new Error(await res.text())
+    await apiRequest(`/users/${id}`, 'DELETE')
     fetchRecentUsers()
     if (currentQuery) searchUsers()
     closeUserModal()
