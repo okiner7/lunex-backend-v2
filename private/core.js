@@ -105,6 +105,14 @@ async function fetchStats() {
     if (data.memory) {
       document.getElementById('stat-memory').innerText = data.memory.appMemoryMB + ' MB'
     }
+    
+    if (data.redis) {
+      const statusText = data.redis.enabled ? data.redis.status.toUpperCase() : 'DISABLED'
+      document.getElementById('stat-redis').innerText = statusText
+    } else {
+      document.getElementById('stat-redis').innerText = 'N/A'
+    }
+
     const uptime = data.uptimeSeconds || 0
     const hrs = Math.floor(uptime / 3600)
     const mins = Math.floor((uptime % 3600) / 60)
