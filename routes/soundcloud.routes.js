@@ -29,7 +29,9 @@ router.get('/stream', asyncHandler(async (req) => {
 
   if (id) {
     try {
-      const trackData = await sc.request(`/tracks/${id}`)
+      const trackRes = await sc.requestFull(`/tracks/${id}`)
+      const trackData = trackRes.data
+      const originalAgent = trackRes.config._proxyAgent
       const authParam = trackData.track_authorization
       
       const unencrypted = trackData?.media?.transcodings?.filter(t => t.format.protocol === 'progressive' || t.format.protocol === 'hls') || []
@@ -37,7 +39,7 @@ router.get('/stream', asyncHandler(async (req) => {
       let foundUrl = null
       for (const tc of unencrypted) {
         try {
-           const tcRes = await sc.request(tc.url, authParam ? { track_authorization: authParam } : {})
+           const tcRes = await sc.request(tc.url, authParam ? { track_authorization: authParam } : {}, 3, originalAgent)
            if (tcRes && tcRes.url) {
              foundUrl = tcRes.url
              break

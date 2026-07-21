@@ -13,6 +13,13 @@ const scClient = axios.create({
 })
 
 scClient.interceptors.request.use(config => {
+  if (config._forceAgent) {
+    config.httpsAgent = config._forceAgent
+    config._proxyAgent = config._forceAgent
+    config.proxy = false
+    return config
+  }
+
   const agentData = getCountryAwareProxyAgent(config._forbiddenCountries || [])
   if (agentData && agentData.agent) {
     config.httpsAgent = agentData.agent
@@ -90,7 +97,7 @@ async function refreshClientId() {
   return refreshPromise
 }
 
-async function request(pathOrUrl, params = {}, retries = 3) {
+async function requestFull(pathOrUrl, params = {}, retries = 3, forceAgent = null) {
   if (!cachedClientId) await refreshClientId()
 
   let lastErr = null
@@ -99,12 +106,13 @@ async function request(pathOrUrl, params = {}, retries = 3) {
   for (let attempt = 1; attempt <= retries; attempt++) {
     const config = { 
       params: { ...params, client_id: cachedClientId },
-      _forbiddenCountries: forbiddenCountries
+      _forbiddenCountries: forbiddenCountries,
+      _forceAgent: forceAgent
     }
     
     try {
       const res = await scClient.get(pathOrUrl, config)
-      return res.data
+      return res
     } catch (err) {
       lastErr = err
       const status = err.response?.status
@@ -142,6 +150,11 @@ async function request(pathOrUrl, params = {}, retries = 3) {
   throw lastErr
 }
 
+async function request(pathOrUrl, params = {}, retries = 3, forceAgent = null) {
+  const res = await requestFull(pathOrUrl, params, retries, forceAgent)
+  return res.data
+}
+
 async function fetchAll(initialPath, maxItems = 1000) {
   let results = []
   let nextHref = initialPath
@@ -161,4 +174,4 @@ async function getUserId(profileUrl) {
   return user.id
 }
 
-module.exports = { scClient, request, fetchAll, refreshClientId, getUserId }
+module.exports = { scClient, request, requestFull, fetchAll, refreshClientId, getUserId }
