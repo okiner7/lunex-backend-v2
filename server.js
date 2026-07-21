@@ -116,8 +116,18 @@ if (require.main === module) {
     console.log(`[PID]     ${process.pid}`)
     console.log('=======================================\n')
     if (process.env.NODE_ENV !== 'test') {
-      telegramBot.start()
-      proxyHealth.start()
+      // PM2 injects NODE_APP_INSTANCE. 
+      // If undefined (local run) or '0' (first PM2 worker), start singletons.
+      const isPrimaryWorker = typeof process.env.NODE_APP_INSTANCE === 'undefined' || process.env.NODE_APP_INSTANCE === '0'
+      
+      if (isPrimaryWorker) {
+        console.log(`[Worker] Primary instance detected (Instance 0) - Starting Bot & Cron Jobs`)
+        telegramBot.start()
+        proxyHealth.start()
+      } else {
+        console.log(`[Worker] Secondary instance detected (Instance ${process.env.NODE_APP_INSTANCE}) - Skiping Bot & Cron Jobs`)
+      }
+
       yt.init().catch(err => console.error('[YouTube] Init error:', err.message))
     }
   })
