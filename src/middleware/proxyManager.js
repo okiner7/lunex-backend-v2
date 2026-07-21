@@ -89,7 +89,9 @@ class ProxyPool {
       }
       this.proxies = parsed
       this.cursor  = 0
-      console.log(`[ProxyPool] Loaded ${parsed.length} proxies`)
+      if (typeof process.env.NODE_APP_INSTANCE === 'undefined' || process.env.NODE_APP_INSTANCE === '0') {
+        console.log(`[ProxyPool] Loaded ${parsed.length} proxies`)
+      }
 
       parsed.forEach(p => {
         if (!p.country) this._resolveCountry(p)

@@ -76,7 +76,6 @@ function start() {
   })
 
   bot.launch()
-  console.log('[TG Bot] Polling started successfully')
 }
 
 function stop() {

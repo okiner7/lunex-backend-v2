@@ -139,7 +139,6 @@ function start(intervalMs = 5 * 60 * 1000) {
   if (healthCheckInterval) clearInterval(healthCheckInterval)
   checkAll()
   healthCheckInterval = setInterval(checkAll, intervalMs)
-  console.log(`[ProxyHealth] Started — checking pool every ${intervalMs / 60000} min`)
 }
 
 function stop() {
