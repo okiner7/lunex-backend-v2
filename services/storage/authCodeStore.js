@@ -11,10 +11,14 @@ function generateCode() {
   return code
 }
 
+// Generate NeDB-like string _id for compatibility
+function genId() { return crypto.randomBytes(8).toString('hex') }
+
 async function create(telegramId, name, avatar) {
   const code = generateCode()
   const now = new Date()
   const doc = {
+    _id: genId(),
     code,
     telegramId,
     name,
@@ -22,42 +26,22 @@ async function create(telegramId, name, avatar) {
     createdAt: now,
     expiresAt: new Date(now.getTime() + 5 * 60 * 1000)
   }
-  // remove old code for same user
+  
   await removeByTelegramId(telegramId)
-
-  return new Promise((resolve, reject) => {
-    db.authCodes.insert(doc, (err, newDoc) => {
-      if (err) return reject(err)
-      resolve(newDoc)
-    })
-  })
+  await db.authCodes.insertOne(doc)
+  return doc
 }
 
 async function findByCode(code) {
-  return new Promise((resolve, reject) => {
-    db.authCodes.findOne({ code: code.toUpperCase() }, (err, doc) => {
-      if (err) return reject(err)
-      resolve(doc || null)
-    })
-  })
+  return await db.authCodes.findOne({ code: code.toUpperCase() })
 }
 
 async function removeByTelegramId(telegramId) {
-  return new Promise((resolve, reject) => {
-    db.authCodes.remove({ telegramId }, { multi: true }, (err, num) => {
-      if (err) return reject(err)
-      resolve(num)
-    })
-  })
+  return await db.authCodes.deleteMany({ telegramId })
 }
 
 async function remove(id) {
-  return new Promise((resolve, reject) => {
-    db.authCodes.remove({ _id: id }, {}, (err, num) => {
-      if (err) return reject(err)
-      resolve(num)
-    })
-  })
+  return await db.authCodes.deleteOne({ _id: id })
 }
 
 module.exports = { create, findByCode, remove, removeByTelegramId }

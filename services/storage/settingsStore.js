@@ -1,16 +1,14 @@
 const db = require('./database')
+const crypto = require('crypto')
+
+function genId() { return crypto.randomBytes(8).toString('hex') }
 
 async function get(userId) {
-  return new Promise((resolve, reject) => {
-    db.settings.findOne({ userId }, (err, doc) => {
-      if (err) return reject(err)
-      resolve(doc || { theme: 'dark', accent: '#b485ff' })
-    })
-  })
+  const doc = await db.settings.findOne({ userId })
+  return doc || { theme: 'dark', accent: '#b485ff' }
 }
 
 async function upsert(userId, fields) {
-  // LNX-2026-025: whitelist only known fields to prevent arbitrary field injection
   const ALLOWED = ['theme', 'accent', 'customThemeData']
   const safe = {}
   for (const key of ALLOWED) {
@@ -18,12 +16,11 @@ async function upsert(userId, fields) {
   }
   const existing = await get(userId)
   const doc = { ...existing, ...safe, userId }
-  return new Promise((resolve, reject) => {
-    db.settings.update({ userId }, doc, { upsert: true }, (err) => {
-      if (err) return reject(err)
-      resolve(doc)
-    })
-  })
+  
+  if (!doc._id) doc._id = genId()
+  
+  await db.settings.replaceOne({ userId }, doc, { upsert: true })
+  return doc
 }
 
 module.exports = { get, upsert }

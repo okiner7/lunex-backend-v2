@@ -1,27 +1,27 @@
 const db = require('./database')
 const statsStore = require('./statsStore')
+const crypto = require('crypto')
+
+function genId() { return crypto.randomBytes(8).toString('hex') }
 
 const MAX_HISTORY = 50
 
 async function getRecent(userId, limit = 50) {
-  return new Promise((resolve, reject) => {
-    db.listeningHist.find({ userId }).sort({ playedAt: -1 }).limit(limit).exec((err, docs) => {
-      if (err) return reject(err)
-      resolve((docs || []).map(d => ({
-        id: d.id,
-        source: d.source,
-        title: d.title,
-        artist: d.artist,
-        artwork: d.artwork,
-        duration: d.duration,
-        playedAt: d.playedAt
-      })))
-    })
-  })
+  const docs = await db.listeningHist.find({ userId }).sort({ playedAt: -1 }).limit(limit).toArray()
+  return (docs || []).map(d => ({
+    id: d.id,
+    source: d.source,
+    title: d.title,
+    artist: d.artist,
+    artwork: d.artwork,
+    duration: d.duration,
+    playedAt: d.playedAt
+  }))
 }
 
 async function add(userId, track) {
   const doc = {
+    _id: genId(),
     userId,
     id: track.id,
     source: track.source,
@@ -31,40 +31,25 @@ async function add(userId, track) {
     duration: track.duration,
     playedAt: new Date()
   }
-  return new Promise((resolve, reject) => {
-    db.listeningHist.insert(doc, async (err) => {
-      if (err) return reject(err)
-      await trim(userId)
-      await statsStore.incrementListenCount().catch(console.error)
-      await statsStore.incrementTrackPlay(track).catch(console.error)
-      const userStore = require('./userStore')
-      await userStore.incrementUserStat(userId, 'totalListens').catch(console.error)
-      resolve(doc)
-    })
-  })
+  
+  await db.listeningHist.insertOne(doc)
+  await trim(userId)
+  await statsStore.incrementListenCount().catch(console.error)
+  await statsStore.incrementTrackPlay(track).catch(console.error)
+  const userStore = require('./userStore')
+  await userStore.incrementUserStat(userId, 'totalListens').catch(console.error)
+  return doc
 }
 
 async function trim(userId) {
-  return new Promise((resolve, reject) => {
-    db.listeningHist.find({ userId }).sort({ playedAt: -1 }).skip(MAX_HISTORY).exec((err, docs) => {
-      if (err) return reject(err)
-      const ids = docs.map(d => d._id)
-      if (ids.length === 0) return resolve()
-      db.listeningHist.remove({ _id: { $in: ids } }, { multi: true }, (err2) => {
-        if (err2) return reject(err2)
-        resolve()
-      })
-    })
-  })
+  const docs = await db.listeningHist.find({ userId }).sort({ playedAt: -1 }).skip(MAX_HISTORY).toArray()
+  const ids = docs.map(d => d._id)
+  if (ids.length === 0) return
+  await db.listeningHist.deleteMany({ _id: { $in: ids } })
 }
 
 async function clear(userId) {
-  return new Promise((resolve, reject) => {
-    db.listeningHist.remove({ userId }, { multi: true }, (err, num) => {
-      if (err) return reject(err)
-      resolve(num)
-    })
-  })
+  return await db.listeningHist.deleteMany({ userId })
 }
 
 module.exports = { getRecent, add, clear }

@@ -1,17 +1,15 @@
 const db = require('./database')
 const badgeStore = require('./badgeStore')
+const crypto = require('crypto')
+
+function genId() { return crypto.randomBytes(8).toString('hex') }
 
 function buildUserId(provider, providerId) {
   return `${provider}_${providerId}`
 }
 
 async function getAll(userId) {
-  return new Promise((resolve, reject) => {
-    db.likes.find({ userId }).sort({ likedAt: -1 }).exec((err, docs) => {
-      if (err) return reject(err)
-      resolve(docs || [])
-    })
-  })
+  return await db.likes.find({ userId }).sort({ likedAt: -1 }).toArray()
 }
 
 async function add(userId, track, providerId) {
@@ -21,6 +19,7 @@ async function add(userId, track, providerId) {
     return { liked: false }
   }
   const doc = {
+    _id: genId(),
     userId,
     id: track.id,
     trackId: track.id,
@@ -32,50 +31,27 @@ async function add(userId, track, providerId) {
     url: track.url,
     likedAt: new Date()
   }
-  return new Promise((resolve, reject) => {
-    db.likes.insert(doc, async (err) => {
-      if (err) return reject(err)
-      const count = await countByUser(userId)
-      await badgeStore.checkAndGrantLikeBadges(providerId, count)
-      resolve({ liked: true })
-    })
-  })
+  
+  await db.likes.insertOne(doc)
+  const count = await countByUser(userId)
+  await badgeStore.checkAndGrantLikeBadges(providerId, count)
+  return { liked: true }
 }
 
 async function remove(docId) {
-  return new Promise((resolve, reject) => {
-    db.likes.remove({ _id: docId }, {}, (err, num) => {
-      if (err) return reject(err)
-      resolve(num)
-    })
-  })
+  return await db.likes.deleteOne({ _id: docId })
 }
 
 async function removeByTrack(userId, trackId, source) {
-  return new Promise((resolve, reject) => {
-    db.likes.remove({ userId, trackId, source }, {}, (err, num) => {
-      if (err) return reject(err)
-      resolve(num)
-    })
-  })
+  return await db.likes.deleteMany({ userId, trackId, source })
 }
 
 async function findOne(userId, trackId, source) {
-  return new Promise((resolve, reject) => {
-    db.likes.findOne({ userId, trackId, source }, (err, doc) => {
-      if (err) return reject(err)
-      resolve(doc || null)
-    })
-  })
+  return await db.likes.findOne({ userId, trackId, source })
 }
 
 async function countByUser(userId) {
-  return new Promise((resolve, reject) => {
-    db.likes.count({ userId }, (err, count) => {
-      if (err) return reject(err)
-      resolve(count)
-    })
-  })
+  return await db.likes.countDocuments({ userId })
 }
 
 module.exports = { getAll, add, remove, removeByTrack, countByUser, buildUserId }

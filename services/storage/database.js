@@ -1,38 +1,50 @@
-const Datastore = require('@seald-io/nedb')
-const path = require('path')
+const { MongoClient } = require('mongodb')
 
-const DATA_DIR = path.join(__dirname, '..', '..', 'data')
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/lunex'
+const client = new MongoClient(MONGO_URI)
 
 const db = {}
 
-const isTest = process.env.NODE_ENV === 'test'
+let connectPromise = null
 
-function createDb(name) {
-  if (isTest) {
-    return new Datastore({ inMemoryOnly: true, autoload: true })
-  }
-  return new Datastore({ filename: path.join(DATA_DIR, `${name}.db`), autoload: true })
+async function connectDB() {
+  if (connectPromise) return connectPromise
+  connectPromise = client.connect()
+    .then(() => {
+      console.log('[MongoDB] Connected to database')
+      const mdb = client.db()
+      
+      // Map collections to existing property names
+      db.users = mdb.collection('users')
+      db.likes = mdb.collection('likes')
+      db.playlists = mdb.collection('playlists')
+      db.settings = mdb.collection('settings')
+      db.searchHist = mdb.collection('search_history')
+      db.authCodes = mdb.collection('auth_codes')
+      db.listeningHist = mdb.collection('listening_history')
+      db.themes = mdb.collection('themes')
+      db.stats = mdb.collection('stats')
+      db.trackStats = mdb.collection('track_stats')
+
+      // Ensure Indexes
+      db.users.createIndex({ providerId: 1 }, { unique: true })
+      db.likes.createIndex({ userId: 1 })
+      db.playlists.createIndex({ ownerId: 1 })
+      db.settings.createIndex({ userId: 1 }, { unique: true })
+      db.searchHist.createIndex({ userId: 1 })
+      db.authCodes.createIndex({ code: 1 }, { unique: true })
+      db.authCodes.createIndex({ telegramId: 1 })
+      db.listeningHist.createIndex({ userId: 1 })
+      db.trackStats.createIndex({ id: 1 }, { unique: true })
+    })
+    .catch(err => {
+      console.error('[MongoDB] Connection error:', err)
+      process.exit(1)
+    })
+  return connectPromise
 }
 
-db.users = createDb('users')
-db.likes = createDb('likes')
-db.playlists = createDb('playlists')
-db.settings = createDb('settings')
-db.searchHist = createDb('search_history')
-db.authCodes = createDb('auth_codes')
-db.listeningHist = createDb('listening_history')
-db.themes = createDb('themes')
-db.stats = createDb('stats')
-db.trackStats = createDb('track_stats')
-
-db.users.ensureIndex({ fieldName: 'providerId', unique: true })
-db.likes.ensureIndex({ fieldName: 'userId' })
-db.playlists.ensureIndex({ fieldName: 'ownerId' })
-db.settings.ensureIndex({ fieldName: 'userId', unique: true })
-db.searchHist.ensureIndex({ fieldName: 'userId' })
-db.authCodes.ensureIndex({ fieldName: 'code', unique: true })
-db.authCodes.ensureIndex({ fieldName: 'telegramId' })
-db.listeningHist.ensureIndex({ fieldName: 'userId' })
-db.trackStats.ensureIndex({ fieldName: 'id', unique: true })
+// Connect immediately so operations are buffered/ready
+connectDB()
 
 module.exports = db
