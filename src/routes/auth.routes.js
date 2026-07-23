@@ -19,7 +19,7 @@ function isSafeCallback(callbackUrl) {
   if (!callbackUrl || typeof callbackUrl !== 'string') return false
   try {
     const parsed = new URL(callbackUrl)
-    if (parsed.protocol === 'lunex:') return true
+    if (parsed.protocol === 'plume:') return true
     if ((parsed.protocol === 'http:' || parsed.protocol === 'https:') && parsed.hostname === 'localhost') return true
     return false
   } catch (e) {

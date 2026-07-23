@@ -59,7 +59,7 @@
 **Hardcoded APP_SECRET in Source Code**  
 **CVSS: 9.8 (Critical)** · `AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H`
 
-The `APP_SECRET` used for HMAC request signing was hardcoded as `'my-super-secret-desktop-key'` directly in both `electron/main.js` and `src/config/env.js`. Since both repositories are on GitHub, any reader could forge a valid `x-lunex-signature` header and bypass API authentication.
+The `APP_SECRET` used for HMAC request signing was hardcoded as `'my-super-secret-desktop-key'` directly in both `electron/main.js` and `src/config/env.js`. Since both repositories are on GitHub, any reader could forge a valid `x-plume-signature` header and bypass API authentication.
 
 **Fix:** Both `APP_SECRET` and `JWT_SECRET` now use `requireEnv()` which throws at startup if the environment variable is not set. No fallback values exist.
 
@@ -164,7 +164,7 @@ The avatar URL was stored as `https://api.telegram.org/file/bot{TOKEN}/{file_pat
 const ALLOWED_ORIGINS = [
   /^http:\/\/localhost(:\d+)?$/,
   /^https:\/\/localhost(:\d+)?$/,
-  /^lunex:\/\//,
+  /^plume:\/\//,
 ]
 ```
 
@@ -243,7 +243,7 @@ Data structures like `track` payloads in `POST /likes`, `POST /listening-history
 **Fix:** 
 - Implemented `sanitizeTrack()` in `user-data.routes.js` to strictly slice all strings to safe lengths (100-1000 characters).
 - Enforced hard limits: 50 playlists per user, 500 tracks per playlist, 10 custom themes per user.
-- Sliced `x-lunex-platform` headers to a maximum of 50 characters to prevent metric database bloat.
+- Sliced `x-plume-platform` headers to a maximum of 50 characters to prevent metric database bloat.
 
 ---
 
@@ -275,16 +275,16 @@ The `APP_SECRET` used for HMAC request signing is **still hardcoded** as a strin
 
 ```js
 // electron/main.js line 11
-const APP_SECRET = 'super-secret-lunex-app-key-2026'
+const APP_SECRET = 'super-secret-plume-app-key-2026'
 ```
 
 Anyone who decompiles the shipped Electron `.asar` archive (a trivial operation: `npx asar extract app.asar ./out`) can extract this secret and forge any API request with a valid HMAC signature, bypassing the Private API authentication middleware entirely.
 
-**Recommended Fix:** Use `process.env.LUNEX_APP_SECRET` injected at build time via `electron-builder`'s `extraMetadata` or an env-injection build step. If that is not feasible, rotate the secret and accept that it will be visible to determined users (Electron client is untrusted by design).
+**Recommended Fix:** Use `process.env.PLUME_APP_SECRET` injected at build time via `electron-builder`'s `extraMetadata` or an env-injection build step. If that is not feasible, rotate the secret and accept that it will be visible to determined users (Electron client is untrusted by design).
 
 ```diff
-- const APP_SECRET = 'super-secret-lunex-app-key-2026'
-+ const APP_SECRET = process.env.LUNEX_APP_SECRET || import.meta.env.VITE_APP_SECRET
+- const APP_SECRET = 'super-secret-plume-app-key-2026'
++ const APP_SECRET = process.env.PLUME_APP_SECRET || import.meta.env.VITE_APP_SECRET
 ```
 
 ---

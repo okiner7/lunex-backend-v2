@@ -1,4 +1,4 @@
-let jwtToken = localStorage.getItem('lunex_admin_jwt') || ''
+let jwtToken = localStorage.getItem('plume_admin_jwt') || ''
 
 document.addEventListener('DOMContentLoaded', () => {
   const jwtInput = document.getElementById('jwtToken')
@@ -40,7 +40,7 @@ async function login() {
     
     if (!response.ok) throw new Error('Invalid token')
 
-    localStorage.setItem('lunex_admin_jwt', jwtToken)
+    localStorage.setItem('plume_admin_jwt', jwtToken)
     
     // Now fetch the secure core JS
     const coreRes = await fetch('/api/admin/core.js', {
@@ -63,7 +63,7 @@ async function login() {
     }
   } catch (err) {
     alert('Authentication failed: ' + err.message)
-    localStorage.removeItem('lunex_admin_jwt')
+    localStorage.removeItem('plume_admin_jwt')
     jwtToken = ''
   }
 }

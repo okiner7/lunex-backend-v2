@@ -59,7 +59,7 @@ async function apiRequest(endpoint, method = 'GET', body = null) {
 
 
 function logout() {
-  localStorage.removeItem('lunex_admin_jwt')
+  localStorage.removeItem('plume_admin_jwt')
   jwtToken = ''
   document.getElementById('jwtToken').value = ''
   document.getElementById('dashboard-view').classList.remove('active')

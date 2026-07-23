@@ -3,7 +3,7 @@ require('dotenv').config()
 // Секреты обязательны. Без них сервер не запустится.
 function requireEnv(key) {
   const val = process.env[key]
-  if (!val) throw new Error(`[Lunex] Отсутствует обязательная переменная среды: ${key}`)
+  if (!val) throw new Error(`[Plume] Отсутствует обязательная переменная среды: ${key}`)
   return val
 }
 
@@ -20,7 +20,7 @@ module.exports = {
   GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/auth/google/callback',
 
   TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN || '',
-  TELEGRAM_BOT_USERNAME: process.env.TELEGRAM_BOT_USERNAME || 'LunexAuthBot',
+  TELEGRAM_BOT_USERNAME: process.env.TELEGRAM_BOT_USERNAME || 'PlumeAuthBot',
 
   DEV_EMAILS: (process.env.DEV_EMAILS || '').split(',').filter(Boolean),
   DEV_TELEGRAM_IDS: (process.env.DEV_TELEGRAM_IDS || '').split(',').filter(Boolean),

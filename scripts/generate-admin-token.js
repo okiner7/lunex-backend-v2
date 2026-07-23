@@ -29,7 +29,7 @@ const token = jwt.sign(
 )
 
 console.log('\n=======================================')
-console.log('         LUNEX ADMIN TOKEN             ')
+console.log('         PLUME ADMIN TOKEN             ')
 console.log('=======================================\n')
 console.log('Ваш токен (скопируйте и вставьте в админ-панель):\n')
 console.log(token)

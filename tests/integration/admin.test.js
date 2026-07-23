@@ -9,8 +9,8 @@ function getSignedHeaders(path) {
     .update(path + timestamp)
     .digest('hex');
   return {
-    'x-lunex-timestamp': timestamp,
-    'x-lunex-signature': signature
+    'x-plume-timestamp': timestamp,
+    'x-plume-signature': signature
   };
 }
 

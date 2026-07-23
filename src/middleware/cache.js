@@ -32,7 +32,7 @@ const cacheMiddleware = (duration = 7200) => {
   return async (req, res, next) => {
     if (req.method !== 'GET') return next()
 
-    const key = `lunex:${req.originalUrl}`
+    const key = `plume:${req.originalUrl}`
 
     // Чтение из кэша
     if (redis) {

@@ -3,7 +3,7 @@ version: '3.8'
 services:
   backend:
     build: .
-    container_name: lunex-backend
+    container_name: plume-backend
     restart: always
     volumes:
       # Пробрасываем папку с базой данных и прокси наружу,
@@ -15,14 +15,14 @@ services:
       - NODE_ENV=production
       - PORT=5000
       - REDIS_URL=redis://redis:6379
-      - MONGO_URI=mongodb://mongodb:27017/lunex
+      - MONGO_URI=mongodb://mongodb:27017/plume
     depends_on:
       - redis
       - mongodb
 
   nginx:
     image: nginx:alpine
-    container_name: lunex-nginx
+    container_name: plume-nginx
     restart: always
     ports:
       - "80:80"
@@ -34,7 +34,7 @@ services:
 
   mongodb:
     image: mongo:6
-    container_name: lunex-mongo
+    container_name: plume-mongo
     command: ["mongod", "--quiet", "--setParameter", "logComponentVerbosity={network:{verbosity:-1}}"]
     restart: always
     ports:
@@ -44,7 +44,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: lunex-redis
+    container_name: plume-redis
     restart: always
     ports:
       - "127.0.0.1:6379:6379"

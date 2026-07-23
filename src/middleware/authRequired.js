@@ -13,7 +13,7 @@ module.exports = (req, res, next) => {
     
     // Update lastActiveAt if needed
     if (decoded.provider_id) {
-      const platform = String(req.headers['x-lunex-platform'] || 'unknown').slice(0, 50)
+      const platform = String(req.headers['x-plume-platform'] || 'unknown').slice(0, 50)
       userStore.updateLastActive(decoded.provider_id, platform).catch(console.error)
     }
 

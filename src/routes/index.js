@@ -16,7 +16,7 @@ const adminAuth = require('../middleware/adminAuth')
 
 const router = Router()
 
-router.get('/', (req, res) => res.json({ status: 'ok', service: 'Lunex API' }))
+router.get('/', (req, res) => res.json({ status: 'ok', service: 'Plume API' }))
 
 router.get('/api/status', adminAuth, async (req, res) => {
     const memUsage = process.memoryUsage();

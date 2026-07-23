@@ -52,8 +52,8 @@ app.use((req, res, next) => {
   // Allow Telegram Webhooks, Status, Root endpoint, OAuth routes, static Admin UI, and favicon
   if (req.path === '/api/status' || req.path === '/' || req.path === '/favicon.ico' || req.path.startsWith('/auth/') || req.path.startsWith('/admin') || req.path.startsWith('/api/admin') || req.method === 'OPTIONS') return next()
   
-  const timestamp = req.headers['x-lunex-timestamp']
-  const signature = req.headers['x-lunex-signature']
+  const timestamp = req.headers['x-plume-timestamp']
+  const signature = req.headers['x-plume-signature']
   
   if (!timestamp || !signature) {
     return res.status(403).json({ success: false, error: 'Access Denied: Missing Signature' })
@@ -92,7 +92,7 @@ app.use(limiter)
 const ALLOWED_ORIGINS = [
   /^http:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.\d+\.\d+\.\d+)(:\d+)?$/,
   /^https:\/\/(localhost|127\.0\.0\.1|192\.168\.\d+\.\d+|10\.\d+\.\d+\.\d+|172\.\d+\.\d+\.\d+)(:\d+)?$/,
-  /^lunex:\/\//,                   // Electron deep-link
+  /^plume:\/\//,                   // Electron deep-link
 ]
 app.use(cors({
   origin: (origin, callback) => {
@@ -119,7 +119,7 @@ if (require.main === module) {
     
     if (isPrimaryWorker) {
       console.log('\n=======================================')
-      console.log(`[Lunex Backend v2] Server is LIVE`)
+      console.log(`[Plume Backend v2] Server is LIVE`)
       console.log(`[Port]    ${PORT}`)
       console.log(`[PID]     ${process.pid}`)
       console.log('=======================================\n')
