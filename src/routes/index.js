@@ -26,7 +26,7 @@ router.get('/api/status', adminAuth, async (req, res) => {
     const redisStatus = redis ? redis.status : 'disconnected';
     
     // Fetch stats from DB
-    const getCount = (collection) => new Promise(resolve => collection.count({}, (err, c) => resolve(c || 0)))
+    const getCount = (collection) => collection.countDocuments({}).catch(() => 0)
     const [usersCount, playlistsCount, likesCount, globalStats, activeUsers] = await Promise.all([
         userStore.countAllUsers(),
         getCount(db.playlists),
