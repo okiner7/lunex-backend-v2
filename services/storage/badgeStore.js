@@ -25,7 +25,7 @@ async function grantDeveloperBadge(providerId) {
     id: 'developer',
     label: 'Разработчик',
     icon: 'Code',
-    description: 'Участвует в разработке Lunex'
+    description: 'Участвует в разработке Plume'
   })
 }
 

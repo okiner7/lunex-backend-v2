@@ -37,7 +37,7 @@ function start() {
 
   bot.start((ctx) => {
     ctx.reply(
-      'Добро пожаловать в Lunex!\n\n'
+      'Добро пожаловать в Plume!\n\n'
       + 'Чтобы войти, отправь /login'
     )
   })
@@ -63,7 +63,7 @@ function start() {
     try {
       const codeDoc = await authCodeStore.create(telegramId, name, avatar)
       ctx.replyWithMarkdown(
-        'Твой код для входа в Lunex:\n\n'
+        'Твой код для входа в Plume:\n\n'
         + `\`${codeDoc.code}\`\n\n`
         + 'Вставь его в приложении. Код действителен 5 минут.'
       )
@@ -92,7 +92,7 @@ async function sendAdminAlert(message) {
   
   for (const adminId of DEV_TELEGRAM_IDS) {
     try {
-      await bot.telegram.sendMessage(adminId, `🚨 *Lunex Alert*\n\n${message}`, { parse_mode: 'Markdown' })
+      await bot.telegram.sendMessage(adminId, `🚨 *Plume Alert*\n\n${message}`, { parse_mode: 'Markdown' })
     } catch (err) {
       console.warn(`[TG Bot] Failed to send alert to admin ${adminId}:`, err.message)
     }
