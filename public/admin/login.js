@@ -38,7 +38,16 @@ async function login() {
       headers: { 'Authorization': `Bearer ${jwtToken}` }
     })
     
-    if (!response.ok) throw new Error('Invalid token')
+    if (!response.ok) {
+      let errStr = 'Invalid token'
+      try {
+        const body = await response.json()
+        errStr = body.error || errStr
+      } catch (e) {
+        errStr = `HTTP Error ${response.status}`
+      }
+      throw new Error(errStr)
+    }
 
     localStorage.setItem('plume_admin_jwt', jwtToken)
     

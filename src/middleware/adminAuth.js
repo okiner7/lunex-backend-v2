@@ -31,7 +31,11 @@ const adminAuth = async (req, res, next) => {
 
     return res.status(403).json({ success: false, error: 'Forbidden: Admin access required' })
   } catch (err) {
-    return res.status(401).json({ success: false, error: 'Unauthorized: Invalid token' })
+    if (err.name === 'JsonWebTokenError' || err.name === 'TokenExpiredError') {
+      return res.status(401).json({ success: false, error: 'Unauthorized: Invalid token' })
+    }
+    console.error('[AdminAuth] Error:', err)
+    return res.status(500).json({ success: false, error: 'Internal Server Error during auth check' })
   }
 }
 
