@@ -82,6 +82,7 @@ function switchTab(tabId) {
   else if (tabId === 'users') fetchRecentUsers()
   else if (tabId === 'proxies') fetchProxies()
   else if (tabId === 'insights') fetchInsights()
+  else if (tabId === 'updates') fetchUpdates()
   else if (tabId === 'logs') {
     fetchLogs()
     logsInterval = setInterval(fetchLogs, 2000)
@@ -519,3 +520,82 @@ window.unbanUser = unbanUser
 window.openUserModal = openUserModal
 window.fetchInsights = fetchInsights
 window.switchTab = switchTab
+// ... Updates Handling
+async function fetchUpdates() {
+  const tbody = document.getElementById('updates-table-body')
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 16px; color: var(--text-muted);">Loading...</td></tr>'
+  
+  try {
+    const data = await apiRequest('/updates')
+    const updates = data || {}
+    const platforms = Object.keys(updates)
+    
+    if (platforms.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 16px; color: var(--text-muted);">No updates deployed yet</td></tr>'
+      return
+    }
+    
+    tbody.innerHTML = platforms.map(platform => {
+      const u = updates[platform]
+      const date = new Date(u.uploadDate).toLocaleString()
+      return `
+        <tr>
+          <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 500;">${platform.toUpperCase()}</td>
+          <td style="padding: 12px 16px; border-bottom: 1px solid var(--border);"><span class="badge" style="background: var(--primary); color: white;">v${u.version}</span></td>
+          <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--text-muted);">${u.filename}</td>
+          <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--text-muted);">${date}</td>
+        </tr>
+      `
+    }).join('')
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; padding: 16px; color: #ff4a4a;">Failed to load updates: ${err.message}</td></tr>`
+  }
+}
+
+document.getElementById('form-upload-update')?.addEventListener('submit', async (e) => {
+  e.preventDefault()
+  if (!jwtToken) return
+  
+  const platform = document.getElementById('update-platform').value
+  const version = document.getElementById('update-version').value
+  const notes = document.getElementById('update-notes').value
+  const fileInput = document.getElementById('update-file')
+  const statusSpan = document.getElementById('update-status')
+  const btn = document.getElementById('btn-deploy-update')
+  
+  if (!fileInput.files.length) return
+  
+  const file = fileInput.files[0]
+  const formData = new FormData()
+  formData.append('platform', platform)
+  formData.append('version', version)
+  formData.append('releaseNotes', notes)
+  formData.append('file', file)
+  
+  try {
+    btn.disabled = true
+    statusSpan.style.color = 'var(--text-muted)'
+    statusSpan.innerText = 'Uploading... Please wait.'
+    
+    const res = await fetch('/api/admin/updates', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${jwtToken}`
+      },
+      body: formData
+    })
+    
+    const data = await res.json()
+    if (!res.ok || data.success === false) throw new Error(data.error || 'Upload failed')
+    
+    statusSpan.style.color = '#10b981'
+    statusSpan.innerText = 'Update deployed successfully!'
+    e.target.reset()
+    fetchUpdates()
+  } catch (err) {
+    statusSpan.style.color = '#ff4a4a'
+    statusSpan.innerText = `Error: ${err.message}`
+  } finally {
+    btn.disabled = false
+  }
+})

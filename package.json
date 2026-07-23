@@ -26,6 +26,7 @@
     "log-update": "^8.0.0",
     "mongodb": "^7.5.0",
     "morgan": "^1.11.0",
+    "multer": "^2.2.0",
     "node-cache": "^5.1.2",
     "telegraf": "^4.16.3",
     "ytmusic-api": "^5.3.1"

@@ -10,8 +10,23 @@ const statsStore = require('../services/storage/statsStore')
 const { myCache } = require('../middleware/cache')
 const fs = require('fs')
 const path = require('path')
+const multer = require('multer')
+const updatesStore = require('../services/storage/updatesStore')
 
 const router = Router()
+
+// Configure multer for update uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const dir = path.join(process.cwd(), 'data', 'updates')
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+    cb(null, dir)
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname)
+  }
+})
+const upload = multer({ storage })
 
 // Log interception for Admin Panel
 const { redis } = require('../middleware/cache')
@@ -196,6 +211,30 @@ router.post('/restart', asyncHandler(async (req) => {
     process.exit(0)
   }, 1000)
   return { message: 'Server is restarting...' }
+}))
+
+router.get('/updates', asyncHandler(async (req) => {
+  return updatesStore.getUpdates()
+}))
+
+router.post('/updates', upload.single('file'), asyncHandler(async (req) => {
+  if (!req.file) {
+    throw new Error('No update file uploaded')
+  }
+  
+  const { version, releaseNotes, platform } = req.body
+  if (!version || !platform) {
+    throw new Error('Version and platform are required')
+  }
+
+  updatesStore.addUpdate(platform, {
+    version,
+    releaseNotes: releaseNotes || '',
+    filename: req.file.originalname,
+    size: req.file.size
+  })
+
+  return { message: 'Update deployed successfully' }
 }))
 
 module.exports = router

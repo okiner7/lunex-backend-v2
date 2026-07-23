@@ -42,6 +42,7 @@
           <button class="tab-btn" data-tab="insights">Insights</button>
           <button class="tab-btn" data-tab="logs">Logs</button>
           <button class="tab-btn" data-tab="system">System</button>
+          <button class="tab-btn" data-tab="updates">Updates</button>
         </div>
         <div class="nav-actions">
           <span class="badge">OWNER</span>
@@ -208,6 +209,67 @@
               <p class="text-muted" style="margin-bottom: 16px;">Hard restart the Node.js process (requires PM2/nodemon).</p>
               <button id="btn-restart-server" class="btn-danger">Restart Server</button>
             </div>
+          </div>
+        </div>
+
+        <!-- TAB: UPDATES -->
+        <div id="tab-updates" class="tab-pane">
+          <div class="page-header">
+            <h2>Updates Management</h2>
+          </div>
+          
+          <div class="system-grid">
+            <div class="card" style="grid-column: span 2;">
+              <h3 style="font-size: 16px; margin-bottom: 16px;">Deploy New Update</h3>
+              <form id="form-upload-update" style="display: flex; flex-direction: column; gap: 16px;">
+                <div class="form-group" style="display: flex; gap: 16px;">
+                  <div style="flex: 1;">
+                    <label>Platform</label>
+                    <select id="update-platform" class="input-base" required>
+                      <option value="windows">Windows</option>
+                      <option value="mac">macOS</option>
+                      <option value="linux">Linux</option>
+                    </select>
+                  </div>
+                  <div style="flex: 1;">
+                    <label>Version</label>
+                    <input type="text" id="update-version" class="input-base" placeholder="e.g. 2.0.1" required>
+                  </div>
+                </div>
+                
+                <div class="form-group">
+                  <label>Release Notes (optional)</label>
+                  <textarea id="update-notes" class="input-base" rows="3" placeholder="What's new in this version?"></textarea>
+                </div>
+                
+                <div class="form-group">
+                  <label>Update File (.exe, .dmg, .zip)</label>
+                  <input type="file" id="update-file" class="input-base" required style="padding: 8px;">
+                </div>
+                
+                <div>
+                  <button type="submit" class="btn-primary" id="btn-deploy-update">Deploy Update</button>
+                  <span id="update-status" style="margin-left: 12px; font-size: 13px; color: var(--text-muted);"></span>
+                </div>
+              </form>
+            </div>
+          </div>
+          
+          <h3 style="font-size: 16px; margin: 24px 0 16px;">Current Deployments</h3>
+          <div class="card" style="padding: 0; overflow-x: auto;">
+            <table class="data-table" style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr>
+                  <th style="text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--text-muted);">Platform</th>
+                  <th style="text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--text-muted);">Version</th>
+                  <th style="text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--text-muted);">Filename</th>
+                  <th style="text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--text-muted);">Deployed</th>
+                </tr>
+              </thead>
+              <tbody id="updates-table-body">
+                <tr><td colspan="4" style="text-align: center; padding: 16px; color: var(--text-muted);">Loading...</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
