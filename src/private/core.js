@@ -517,29 +517,51 @@ window.flushCache = flushCache
 window.restartServer = restartServer
 window.banUser = banUser
 window.unbanUser = unbanUser
-window.openUserModal = openUserModal
-window.fetchInsights = fetchInsights
+let currentUpdateFilter = 'all'
+
+window.setUpdateFilter = (filter) => {
+  currentUpdateFilter = filter
+  document.querySelectorAll('.update-filter-btn').forEach(btn => {
+    btn.style.opacity = btn.getAttribute('data-filter') === filter ? '1' : '0.5'
+  })
+  fetchUpdates()
+}
+
 window.switchTab = switchTab
 
 window.deleteUpdate = async (platform, channel, version) => {
   if (!confirm(`Are you sure you want to delete ${platform} ${channel} v${version}?`)) return
   try {
-    await apiRequest(`/updates/${platform}/${channel}/${version}`, { method: 'DELETE' })
+    await apiRequest(`/updates/${platform}/${channel}/${version}`, 'DELETE')
     fetchUpdates()
   } catch (err) {
     alert(`Failed to delete: ${err.message}`)
   }
 }
 
+window.rollbackUpdate = async (platform, channel, version) => {
+  if (!confirm(`Are you sure you want to rollback ${platform} ${channel} to v${version}?\nThis will make it the active latest version.`)) return
+  try {
+    await apiRequest(`/updates/rollback/${platform}/${channel}/${version}`, 'POST')
+    fetchUpdates()
+  } catch (err) {
+    alert(`Failed to rollback: ${err.message}`)
+  }
+}
+
 // ... Updates Handling
 async function fetchUpdates() {
   const tbody = document.getElementById('updates-table-body')
-  tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 16px; color: var(--text-muted);">Loading...</td></tr>'
+  tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 16px; color: var(--text-muted);">Loading...</td></tr>'
   
   try {
     const data = await apiRequest('/updates')
     const updates = data || {}
-    const platforms = Object.keys(updates).sort()
+    let platforms = Object.keys(updates).sort()
+    
+    if (currentUpdateFilter !== 'all') {
+      platforms = platforms.filter(p => p === currentUpdateFilter)
+    }
     
     if (platforms.length === 0) {
       tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 16px; color: var(--text-muted);">No updates deployed yet</td></tr>'
@@ -551,8 +573,9 @@ async function fetchUpdates() {
       const channels = Object.keys(updates[platform]).sort()
       for (const channel of channels) {
         const channelUpdates = updates[platform][channel] || []
-        for (const u of channelUpdates) {
+        channelUpdates.forEach((u, idx) => {
           const date = new Date(u.uploadDate).toLocaleString()
+          const isLatest = idx === 0
           rows += `
             <tr>
               <td style="padding: 12px 16px; border-bottom: 1px solid var(--border-color); font-weight: 500;">
@@ -563,14 +586,18 @@ async function fetchUpdates() {
                 <span class="badge">v${u.version}</span>
                 ${u.mandatory ? '<span class="badge" style="background: #ef4444; color: white; border-color: #ef4444; margin-left: 6px;">Mandatory</span>' : ''}
               </td>
-              <td style="padding: 12px 16px; border-bottom: 1px solid var(--border-color); color: var(--text-muted);">${u.filename}</td>
+              <td style="padding: 12px 16px; border-bottom: 1px solid var(--border-color); color: var(--text-muted);">
+                ${u.filename}
+                ${u.blockmap ? `<br><span style="font-size: 11px;">+ ${u.blockmap}</span>` : ''}
+              </td>
               <td style="padding: 12px 16px; border-bottom: 1px solid var(--border-color); color: var(--text-muted);">
                 ${date}
                 <button onclick="deleteUpdate('${platform}', '${channel}', '${u.version}')" style="margin-left: 12px; background: none; border: none; color: #ef4444; cursor: pointer; text-decoration: underline; font-size: 12px;">Delete</button>
+                ${!isLatest ? `<button onclick="rollbackUpdate('${platform}', '${channel}', '${u.version}')" style="margin-left: 8px; background: none; border: none; color: #10b981; cursor: pointer; text-decoration: underline; font-size: 12px;">Rollback</button>` : `<span style="margin-left: 8px; font-size: 12px; color: #10b981;">(Active)</span>`}
               </td>
             </tr>
           `
-        }
+        })
       }
     }
     
@@ -599,6 +626,7 @@ document.getElementById('form-upload-update')?.addEventListener('submit', async 
   if (!fileInput.files.length) return
   
   const file = fileInput.files[0]
+  const blockmapInput = document.getElementById('update-blockmap')
   const formData = new FormData()
   formData.append('platform', platform)
   formData.append('channel', channel)
@@ -606,6 +634,9 @@ document.getElementById('form-upload-update')?.addEventListener('submit', async 
   formData.append('releaseNotes', notes)
   formData.append('mandatory', isMandatory)
   formData.append('file', file)
+  if (blockmapInput && blockmapInput.files.length) {
+    formData.append('blockmap', blockmapInput.files[0])
+  }
   
   btn.disabled = true
   statusSpan.style.color = 'var(--text-muted)'

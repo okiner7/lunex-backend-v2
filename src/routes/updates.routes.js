@@ -18,6 +18,7 @@ router.get('/latest', (req, res) => {
   // Determine the full URL based on the backend URL
   const backendUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`
   const downloadUrl = `${backendUrl}/api/updates/download/${update.filename}`
+  const blockmapUrl = update.blockmap ? `${backendUrl}/api/updates/download/${update.blockmap}` : undefined
 
   return res.json({
     success: true,
@@ -26,6 +27,7 @@ router.get('/latest', (req, res) => {
     mandatory: !!update.mandatory,
     sha256: update.sha256,
     url: downloadUrl,
+    blockmap: blockmapUrl,
     uploadDate: update.uploadDate
   })
 })

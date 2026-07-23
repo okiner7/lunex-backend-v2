@@ -218,10 +218,13 @@ router.get('/updates', asyncHandler(async (req) => {
   return updatesStore.getUpdates()
 }))
 
-router.post('/updates', upload.single('file'), asyncHandler(async (req) => {
-  if (!req.file) {
+router.post('/updates', upload.fields([{ name: 'file', maxCount: 1 }, { name: 'blockmap', maxCount: 1 }]), asyncHandler(async (req) => {
+  if (!req.files || !req.files['file']) {
     throw new Error('No update file uploaded')
   }
+  
+  const file = req.files['file'][0]
+  const blockmapFile = req.files['blockmap'] ? req.files['blockmap'][0] : null
   
   const { version, releaseNotes, platform, mandatory, channel = 'stable' } = req.body
   if (!version || !platform) {
@@ -230,7 +233,7 @@ router.post('/updates', upload.single('file'), asyncHandler(async (req) => {
 
   // Calculate SHA256
   const hash = crypto.createHash('sha256')
-  const stream = fs.createReadStream(req.file.path)
+  const stream = fs.createReadStream(file.path)
   await new Promise((resolve, reject) => {
     stream.on('data', chunk => hash.update(chunk))
     stream.on('end', () => resolve())
@@ -242,12 +245,34 @@ router.post('/updates', upload.single('file'), asyncHandler(async (req) => {
     version,
     releaseNotes: releaseNotes || '',
     mandatory: mandatory === 'true',
-    filename: req.file.originalname,
-    size: req.file.size,
-    sha256
+    filename: file.originalname,
+    size: file.size,
+    sha256,
+    blockmap: blockmapFile ? blockmapFile.originalname : null
   })
 
   return { message: 'Update deployed successfully' }
+}))
+
+router.post('/updates/rollback/:platform/:channel/:version', asyncHandler(async (req) => {
+  const { platform, channel, version } = req.params
+  const platformData = updatesStore.getUpdates()[platform]
+  if (!platformData || !platformData[channel]) {
+    throw new Error('Platform or channel not found')
+  }
+  
+  const updateToRollback = platformData[channel].find(u => u.version === version)
+  if (!updateToRollback) {
+    throw new Error('Version not found in history')
+  }
+  
+  // Clone the update and add it as the new latest
+  updatesStore.addUpdate(platform, channel, {
+    ...updateToRollback,
+    uploadDate: new Date().toISOString() // will be overridden in addUpdate, but just for clarity
+  })
+  
+  return { message: 'Rollback successful' }
 }))
 
 router.delete('/updates/:platform/:channel/:version', asyncHandler(async (req) => {
