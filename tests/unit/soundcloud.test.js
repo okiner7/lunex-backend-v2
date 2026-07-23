@@ -1,4 +1,4 @@
-const { formatTrack, formatPlaylist } = require('../../services/soundcloud/formatters');
+const { formatTrack, formatPlaylist } = require('../../src/services/soundcloud/formatters');
 
 describe('SoundCloud Formatters', () => {
   it('should format a valid track object correctly', () => {

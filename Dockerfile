@@ -16,4 +16,4 @@ RUN npm install -g pm2
 EXPOSE 5000
 
 # Запуск бэкенда через pm2-runtime в кластерном режиме (на все ядра)
-CMD ["pm2-runtime", "server.js", "-i", "max"]
+CMD ["pm2-runtime", "src/server.js", "-i", "max"]

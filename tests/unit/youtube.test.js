@@ -1,4 +1,4 @@
-const { normaliseTrack, shuffleBiased } = require('../../services/youtube/search');
+const { normaliseTrack, shuffleBiased } = require('../../src/services/youtube/search');
 
 describe('YouTube Search Utilities', () => {
   it('should normalise a track object correctly', () => {

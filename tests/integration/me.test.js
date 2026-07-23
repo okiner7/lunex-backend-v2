@@ -1,5 +1,5 @@
 const request = require('supertest');
-const app = require('../../server');
+const app = require('../../src/server');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 

@@ -1,4 +1,4 @@
-const db = require('../services/storage/database');
+const db = require('../src/services/storage/database');
 const { redis } = require('../src/middleware/cache');
 
 beforeAll(async () => {
