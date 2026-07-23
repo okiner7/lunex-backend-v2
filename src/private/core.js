@@ -528,7 +528,7 @@ async function fetchUpdates() {
   try {
     const data = await apiRequest('/updates')
     const updates = data || {}
-    const platforms = Object.keys(updates)
+    const platforms = Object.keys(updates).sort()
     
     if (platforms.length === 0) {
       tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 16px; color: var(--text-muted);">No updates deployed yet</td></tr>'
@@ -541,7 +541,7 @@ async function fetchUpdates() {
       return `
         <tr>
           <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 500;">${platform.toUpperCase()}</td>
-          <td style="padding: 12px 16px; border-bottom: 1px solid var(--border);"><span class="badge" style="background: var(--primary); color: white;">v${u.version}</span></td>
+          <td style="padding: 12px 16px; border-bottom: 1px solid var(--border);"><span class="badge">v${u.version}</span></td>
           <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--text-muted);">${u.filename}</td>
           <td style="padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--text-muted);">${date}</td>
         </tr>

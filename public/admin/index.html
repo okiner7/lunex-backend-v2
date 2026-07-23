@@ -224,27 +224,28 @@
               <form id="form-upload-update" style="display: flex; flex-direction: column; gap: 16px;">
                 <div class="form-group" style="display: flex; gap: 16px;">
                   <div style="flex: 1;">
-                    <label>Platform</label>
-                    <select id="update-platform" class="input-base" required>
+                    <label style="display: block; margin-bottom: 6px;">Platform</label>
+                    <select id="update-platform" class="input-base" style="width: 100%; box-sizing: border-box;" required>
                       <option value="windows">Windows</option>
                       <option value="mac">macOS</option>
                       <option value="linux">Linux</option>
+                      <option value="android">Android</option>
                     </select>
                   </div>
                   <div style="flex: 1;">
-                    <label>Version</label>
-                    <input type="text" id="update-version" class="input-base" placeholder="e.g. 2.0.1" required>
+                    <label style="display: block; margin-bottom: 6px;">Version</label>
+                    <input type="text" id="update-version" class="input-base" placeholder="e.g. 2.0.1" style="width: 100%; box-sizing: border-box;" required>
                   </div>
                 </div>
                 
                 <div class="form-group">
-                  <label>Release Notes (optional)</label>
-                  <textarea id="update-notes" class="input-base" rows="3" placeholder="What's new in this version?"></textarea>
+                  <label style="display: block; margin-bottom: 6px;">Release Notes (optional)</label>
+                  <textarea id="update-notes" class="input-base" rows="3" placeholder="What's new in this version?" style="width: 100%; box-sizing: border-box;"></textarea>
                 </div>
                 
                 <div class="form-group">
-                  <label>Update File (.exe, .dmg, .zip)</label>
-                  <input type="file" id="update-file" class="input-base" required style="padding: 8px;">
+                  <label style="display: block; margin-bottom: 6px;">Update File (.exe, .dmg, .zip, .apk)</label>
+                  <input type="file" id="update-file" class="input-base" required style="width: 100%; box-sizing: border-box; padding: 6px;">
                 </div>
                 
                 <div>
